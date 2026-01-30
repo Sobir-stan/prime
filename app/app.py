@@ -20,11 +20,3 @@ def send_info():
     return {"message": "Use POST to send data to this endpoint"}
 
 
-@app.post("/send")
-def receive_data(request: Request):
-    data = request.json()
-
-    return {
-        "received_first": data.get("first"),
-        "received_second": data.get("second")
-    }
