@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+
+<h2>Send data to server</h2>
+
+<input id="first" placeholder="First value">
+<br><br>
+<input id="second" placeholder="Second value">
+<br><br>
+
+<button onclick="sendData()">Send</button>
+
+<pre id="result"></pre>
+
+<script>
+function sendData() {
+    const first = document.getElementById("first").value;
+    const second = document.getElementById("second").value;
+
+    fetch("http://localhost:8000/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            first: first,
+            second: second
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById("result").textContent =
+            JSON.stringify(data, null, 2);
+    });
+}
+</script>
+
+</body>
+</html>

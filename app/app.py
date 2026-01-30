@@ -1,11 +1,30 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"message": "Hello from the server"}
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+INDEX_FILE = FRONTEND_DIR / "index.html"
 
-@app.get("/ping")
-def ping():
-    return {"status": "ok"}
+
+@app.get("/", response_class=HTMLResponse)
+def home():
+    with open(INDEX_FILE, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/send")
+def send_info():
+    return {"message": "Use POST to send data to this endpoint"}
+
+
+@app.post("/send")
+async def receive_data(request: Request):
+    data = await request.json()
+
+    return {
+        "received_first": data.get("first"),
+        "received_second": data.get("second")
+    }
