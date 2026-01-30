@@ -21,8 +21,8 @@ def send_info():
 
 
 @app.post("/send")
-async def receive_data(request: Request):
-    data = await request.json()
+def receive_data(request: Request):
+    data = request.json()
 
     return {
         "received_first": data.get("first"),
