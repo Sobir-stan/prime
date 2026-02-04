@@ -14,9 +14,3 @@ def home():
     with open(INDEX_FILE, "r", encoding="utf-8") as f:
         return f.read()
 
-
-@app.get("/send")
-def send_info():
-    return {"message": "Use POST to send data to this endpoint"}
-
-
