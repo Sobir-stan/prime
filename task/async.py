@@ -1,18 +1,58 @@
 import asyncio
 from asyncio import gather
-
-async def study(name,delay):
-    print(f"{name} dars qilishni boshladi")
-    await asyncio.sleep(delay)
-    print(f"{name} dars qilishni tugatdi")
-
-    a = asyncio.gather(study("A",2),study("B",1),study("C",3))
-
-    if a == "B":
-        print(ValueError("Xatolik B da"))
-
-    if ValueError:
-        a.cancel()
+from threading import Semaphore
 
 
-asyncio.run(study("A",2))
+async def work1(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work2(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work3(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work4(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work5(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work6(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def work7(delay):
+    with Semaphore(2):
+        print(f"ishni boshladim")
+        await asyncio.sleep(delay)
+        print(f"ishni tugatdim")
+
+async def main():
+    await gather(
+        work1(2),
+        work2(2),
+        work3(2),
+        work4(2),
+        work5(2),
+        work6(2),
+        work7(2),
+    )
+asyncio.run(main())
