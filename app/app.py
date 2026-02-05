@@ -1,16 +1,33 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from pathlib import Path
+import asyncio
 
-app = FastAPI()
+semaphore = asyncio.Semaphore(3)
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
-INDEX_FILE = FRONTEND_DIR / "index.html"
+async def ishchi(nomi):
+    async with semaphore:
+        print(f"{nomi}: ishni boshladim")
 
 
-@app.get("/", response_class=HTMLResponse)
-def home():
-    with open(INDEX_FILE, "r", encoding="utf-8") as f:
-        return f.read()
+        if nomi == "Ishchi-3":
+            raise ValueError("XATO Ishchi-3 da!")
+
+        await asyncio.sleep(2)
+        print(f"{nomi}: ishni tugatdim")
+
+async def main():
+    tasks = []
+
+    for i in range(1, 8):
+        task = asyncio.create_task(ishchi(f"Ishchi-{i}"))
+        tasks.append(task)
+
+    try:
+        await asyncio.gather(*tasks)
+
+    except Exception as e:
+        print("Xatolik:", e)
+
+        for task in tasks:
+            task.cancel()
+
+asyncio.run(main())
 
