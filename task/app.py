@@ -1,28 +1,31 @@
 import asyncio
 
-async def study(name, delay):
-    print(f"{name} dars qilishni boshladi")
+semaphore = asyncio.Semaphore(3)
 
-    if name == "B":
-        raise ValueError("Xato B da!")
+async def ishchi(nomi):
+    async with semaphore:
+        print(f"{nomi}: ishni boshladim")
 
-    await asyncio.sleep(delay)
+        # Misol uchun: Ishchi-3 xato bersin
+        if nomi == "Ishchi-3":
+            raise ValueError("XATO Ishchi-3 da!")
 
-    print(f"{name} dars qilishni tugatdi")
-    return f"{name} xonadan chiqdi"
+        await asyncio.sleep(2)
+        print(f"{nomi}: ishni tugatdim")
+
 async def main():
-    tasks = [
-        study("A", 2),
-        study("B", 3),
-        study("C", 1)
-    ]
+    tasks = []
 
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for i in range(1, 8):
+        task = asyncio.create_task(ishchi(f"Ishchi-{i}"))
+        tasks.append(task)
 
-    for result in results:
-        if isinstance(result, Exception):
-            print(f"Xato yuz berdi: {result}")
-        else:
-            print(result)
+    try:
+        await asyncio.gather(*tasks)
+
+    except Exception as e:
+        print(" Xatolik:", e)
+        for task in tasks:
+            task.cancel()
+
 asyncio.run(main())
-
