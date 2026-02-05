@@ -26,7 +26,7 @@ async def main():
     except Exception as e:
         print(" Xatolik:", e)
 
-       
+
         for task in tasks:
             task.cancel()
 
