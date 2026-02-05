@@ -6,7 +6,7 @@ async def ishchi(nomi):
     async with semaphore:
         print(f"{nomi}: ishni boshladim")
 
-
+        # Misol uchun: Ishchi-3 xato bersin
         if nomi == "Ishchi-3":
             raise ValueError("XATO Ishchi-3 da!")
 
@@ -24,8 +24,9 @@ async def main():
         await asyncio.gather(*tasks)
 
     except Exception as e:
-        print("Xatolik:", e)
+        print(" Xatolik:", e)
 
+       
         for task in tasks:
             task.cancel()
 
