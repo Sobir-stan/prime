@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ma'lumot yuborish</title>
+</head>
+<body>
+    <h2>FastApi ga ma'lumot yuborish</h2>
+
+        <input type="text" id="input1" placeholder="Matn kriting" required>
+        <button onclick="send()" type="submit">Yuborish</button>
+    <script>
+        function send() {
+            fetch("/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: document.getElementById("input1").value
+                })
+            })
+        }
+    </script>
+
+</body>
+</html>
