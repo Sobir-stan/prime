@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pathlib import Path
+from pydantic import BaseModel, Field
 
 app = FastAPI()
 
@@ -14,3 +15,11 @@ def home():
     with open(INDEX_FILE, "r", encoding="utf-8") as f:
         return f.read()
 
+class userLoginShcemema(BaseModel):
+    username: str
+    age: int = Field(ge = 0, le=100)
+
+@app.post("/login/")
+def login(user : userLoginShcemema):
+
+    return {"username": user.username,"age": user.age}
