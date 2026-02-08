@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>web-site</title>
+    <link
+        rel="stylesheet"
+        href="style.css">
+</head>
+<body>
+    <img src="photo_2026-01-21_15-40-08.jpg">
+    <h1>Login</h1>
+    <div class="login">
+        <input type="text" id="login" placeholder="login">
+    </div>
+    <div class="password">
+        <input type="text" id="password"  placeholder="password">
+    </div>
+    <div class="email">
+        <input type="text" id="email" placeholder="email">
+    </div>
+    <div>
+        <button onclick="send()">LOGIN</button>
+    </div>
+    <a href="http://google.com">Sign in</a>
+        <script>
+        function send() {
+            fetch("/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    text: document.getElementById("input1").value
+                })
+            })
+        }
+    </script>
+
+</body>
+</html>

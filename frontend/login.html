@@ -6,9 +6,16 @@
 </head>
 <body>
     <h2>FastApi ga ma'lumot yuborish</h2>
+        <input type="text" id="input1" placeholder="username" required>
 
-        <input type="text" id="input1" placeholder="Matn kriting" required>
-        <button onclick="send()" type="submit">Yuborish</button>
+    <div>
+        <input type="text" id="input2" placeholder="password" required>
+    </div>
+
+    <div>
+        <input type="text" id="input3" placeholder="email" required>
+    </div>
+    <button onclick="send()" type="submit">Yuborish</button>
     <script>
         function send() {
             fetch("/send", {
@@ -17,7 +24,9 @@
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    text: document.getElementById("input1").value
+                    username: document.getElementById("input1").value,
+                    password: document.getElementById("input2").value,
+                    email: document.getElementById("input3").value
                 })
             })
         }

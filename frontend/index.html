@@ -17,26 +17,26 @@
 <pre id="result"></pre>
 
 <script>
-function sendData() {
-    const first = document.getElementById("first").value;
-    const second = document.getElementById("second").value;
+    function sendData() {
+        const first = document.getElementById("first").value;
+        const second = document.getElementById("second").value;
 
-    fetch("http://localhost:8000/send", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            first: first,
-            second: second
+        fetch("http://localhost:8000/send", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                first: first,
+                second: second
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById("result").textContent =
-            JSON.stringify(data, null, 2);
-    });
-}
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("result").textContent =
+                JSON.stringify(data, null, 2);
+        });
+    }
 </script>
 
 </body>
