@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pathlib import Path
-from pydantic import BaseModel, Field, StrictStr, EmailStr
+from pydantic import BaseModel, Field
+
+
 
 
 app = FastAPI()
