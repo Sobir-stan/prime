@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
+import app
 
 data = {
-    "username": "al",
-    "password" : "1234567",
-    "email": None,
-    "age" : 100
+    "username": "john_doe",
+    "password": "securepassword123",
+    "email": ""
 }
 
 class userSchema(BaseModel):
@@ -15,4 +15,5 @@ class userSchema(BaseModel):
 
 
 userSchema(**data)
+
 

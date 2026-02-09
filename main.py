@@ -1,4 +1,5 @@
 import uvicorn
+import webbrowser
 
 if __name__ == "__main__":
     uvicorn.run(
@@ -7,3 +8,8 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
     )
+
+def open_browser():
+    webbrowser.open("http://localhost:8000/test")
+
+open_browser()
