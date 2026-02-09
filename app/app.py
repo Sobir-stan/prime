@@ -4,7 +4,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from pandas import DataFrame
 import csv
-
+import json
 
 
 app = FastAPI()
@@ -59,3 +59,11 @@ def receive_user(user: UserSchema):
         df.to_csv(f, header=not exists, index=False)
     print(user)
     return user
+
+
+@app.get("/users")
+def get_users():
+    with open(CSV_PATH, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        users = list(reader)
+    return {"users":users}
