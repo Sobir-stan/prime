@@ -1,11 +1,16 @@
 from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from pathlib import Path
-from app.schemas import Body_test
 
-app = FastAPI()
+from starlette.staticfiles import StaticFiles
+
+from app.schemas import Body_test, New_user
+import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+app = FastAPI()
+app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
 
 
 # @app.get("/", response_class=HTMLResponse)
@@ -33,13 +38,19 @@ def body_test(data : Body_test):
     print(data)
     return data
 
-
-@app.get("/test", response_class=HTMLResponse)
-def test_display_html():
-    with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
-            return f.read()
-
 @app.post("/send")
 def get_entered_data(text : dict):
     print(text)
     return {"text": text}
+
+@app.get("/register", response_class=HTMLResponse)
+def register_user():
+    with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.post("/register")
+def register_user(user: New_user):
+    print(user.username, user.email, user.password)
+    return {"msg": "ok"}
+
