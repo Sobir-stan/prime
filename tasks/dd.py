@@ -1,89 +1,67 @@
-import asyncio
-
-# async def cat():
-#     await asyncio.sleep(2)
-#     print("myau")
-#
-# async def dog():
-#     await asyncio.sleep(2)
-#     print("gaf")
-#
-# async def main():
-#     resalt = await cat()
-#     resalt = await dog()
-#
-# asyncio.run(main())
+from fastapi import FastAPI, Request, HTTPException, Form
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from pathlib import Path
+from pydantic import BaseModel, Field
+from pandas import DataFrame
+import csv
+import json
 
 
-# async def study(name, delay):
-#     await asyncio.sleep(delay)
-#     print(f"{name} dars qilishni boshlashdi")
-#     await asyncio.sleep(delay)
-#     print(f"{name} dars qilishni toxtatdi")
-#
-# async def main():
-#     await asyncio.gather(
-#         study("ali", 2),
-#         study("vali", 3),
-#         study("kola", 1)
-#     )
-#
-# asyncio.run(main())
+app = FastAPI()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+CSV_PATH = BASE_DIR / "users.csv"
+
+@app.get("/product/{id}")
+def login(id : int):
+    print(id)
+    return {"id": id}
 
 
-# async def study(name, delay):
-#     await asyncio.sleep(delay)
-#     message = f"{name} dars qilishni boshlashdi"
-#     if name == "b":
-#         raise ValueError("xato b da!")
-#     if message != f"{name} dars qilishni boshlashdi":
-#         raise AssertionError("Сообщение не соответствует ожидаемому")
-#     print(message)
-#     await asyncio.sleep(delay)
-#     print(f"{name} dars qilishni toxtatdi")
-#
-# async def main():
-#     await asyncio.gather(
-#         study("ali", 2),
-#         study("vali", 3),
-#         study("kola", 1)
-#     )
-#
-# asyncio.run(main())
+@app.get("/product/")
+def login(param : int):
+    print(param)
+    return {"param": param}
+
+@app.get("/test", response_class=HTMLResponse)
+def test_display_html():
+    with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+class UserSchema(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=1)
+    email: str
 
 
+@app.post("/send")
+def receive_user(user: UserSchema):
+    if CSV_PATH.exists():
+        try:
+            with open(CSV_PATH, "r", encoding="utf-8", newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    existing = row.get("username")
+                    if existing and existing.strip().lower() == user.username.strip().lower():
+                        raise HTTPException(status_code=400, detail="Username already exists")
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(e)
 
-# async def study(name, delay):
-#     await asyncio.sleep(delay)
-#     message = f"{name} dars qilishni boshlashdi"
-#     if name == "b":
-#         raise ValueError("xato b da!")
-#     if message != f"{name} dars qilishni boshlashdi":
-#         raise AssertionError("Сообщение не соответствует ожидаемому")
-#     print(message)
-#     await asyncio.sleep(delay)
-#     print(f"{name} dars qilishni toxtatdi")
-#
-# async def main():
-#     tasks = [
-#         asyncio.create_task(study("ali", 2)),
-#         asyncio.create_task(study("vali", 3)),
-#         asyncio.create_task(study("kola", 1))
-#     ]
-#
-#     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
-#
-#     # если в выполненных задачах есть ошибка — отменяем остальные и пробрасываем её
-#     for t in done:
-#         exc = t.exception()
-#         if exc is not None:
-#             for p in pending:
-#                 p.cancel()
-#             # дождаться отменённых задач, подавляя исключения
-#             await asyncio.gather(*pending, return_exceptions=True)
-#             raise exc
-#
-#     # если ошибок нет — дождаться оставшихся результатов
-#     await asyncio.gather(*pending)
-#
-# asyncio.run(main())
+    data = user.dict()
+    df = DataFrame([data])
+    exists = CSV_PATH.exists()
+    with open(CSV_PATH, "a", encoding="utf-8", newline='') as f:
+        df.to_csv(f, header=not exists, index=False)
+    print(user)
+    return user
+
+
+@app.get("/users")
+def get_users():
+    with open(CSV_PATH, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        users = list(reader)
+    return {"users":users}
