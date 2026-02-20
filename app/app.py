@@ -40,18 +40,21 @@ def ensure_csv_exist():
 
     if not csv_path.exists():
         df = pd.DataFrame(columns=("username", "email", "password"))
+        df.index.name= "id"
         df.to_csv(csv_path, index=True)
         return df
     else:
-        return pd.read_csv(csv_path)
+        return pd.read_csv(csv_path, index_col="id")
 
 def save_to_csv(user):
     df = ensure_csv_exist()
     csv_path = get_csv_path()
 
     new_user_df = pd.DataFrame([user.model_dump()])
-    updated_df = pd.concat([df, new_user_df], ignore_index=True)
-    updated_df.to_csv(csv_path,index=False )
+    updated_df = pd.concat([df, new_user_df],ignore_index=True)
+    updated_df.index.name = "id"
+
+    updated_df.to_csv(csv_path,index=True )
 
 @app.get("/register", response_class=HTMLResponse)
 def register_user():
