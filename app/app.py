@@ -47,6 +47,11 @@ def ensure_csv_exist():
         return pd.read_csv(csv_path, index_col="id")
 
 def save_to_csv(user):
+
+    error_msg = check_username(user.username, user.email)
+    if error_msg:
+        raise ValueError(error_msg)
+
     df = ensure_csv_exist()
     csv_path = get_csv_path()
 
@@ -56,15 +61,28 @@ def save_to_csv(user):
 
     updated_df.to_csv(csv_path,index=True )
 
+def check_username(username, email):
+    df = ensure_csv_exist()
+    if df.empty:
+        return None
+
+    if (df["username"] == username).any():
+        return f"{username} nomli foydalanuvchi mavjud"
+    elif (df["email"] == email).any():
+        return f"{email} ishlatilgan"
+    else:
+        return None
+
 @app.get("/register", response_class=HTMLResponse)
 def register_user():
     with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
         return f.read()
+
 
 @app.post("/register")
 def register_user(user: New_user):
     save_to_csv(user)
 
     print(user.username, user.email, user.password)
-    return {"msg": "ok"}
+    return {"msg": "ok "}
 
