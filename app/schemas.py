@@ -9,3 +9,7 @@ class New_user(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: str
     password: str = Field(..., min_length=6)
+
+class login_user(BaseModel):
+    username: str
+    password: str

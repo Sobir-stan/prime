@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
-from app.schemas import Body_test, New_user
+from app.schemas import Body_test, New_user, login_user
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,9 +73,9 @@ def check_username(username, email):
     else:
         return None
 
-@app.get("/register", response_class=HTMLResponse)
+@app.get("/register.html", response_class=HTMLResponse)
 def register_user():
-    with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
+    with open(BASE_DIR/"frontend/register.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -85,4 +85,26 @@ def register_user(user: New_user):
 
     print(user.username, user.email, user.password)
     return {"msg": "ok "}
+
+@app.get("/clicker.html", response_class=HTMLResponse)
+def clik():
+    with open(BASE_DIR/"frontend/clicker.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/login", response_class=HTMLResponse)
+def login_user():
+    with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.post("/login")
+def login_user(user: New_user):
+    df = ensure_csv_exist()
+    match_username = df[
+        (df["username"] == user.username)&
+        (df["password"] == user.password)
+    ]
+    if not match_username.empty:
+        return RedirectResponse(url="/cliker", status_code=302)
+    else:
+        return {"login": "failed"}
 
