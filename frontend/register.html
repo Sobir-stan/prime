@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Prime App</title>
+    <title>Create Account | Prime App</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -81,19 +81,19 @@
         }
 
         p.subtitle {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             color: var(--text-muted);
             text-align: center;
             font-size: 0.9rem;
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.15rem;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             font-size: 0.9rem;
             font-weight: 500;
             color: var(--text-color);
@@ -101,7 +101,7 @@
 
         input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.65rem 1rem;
             background: var(--input-bg);
             border: 1px solid var(--panel-border);
             border-radius: 0.5rem;
@@ -134,7 +134,7 @@
             font-weight: 800;
             cursor: pointer;
             transition: transform 0.1s, box-shadow 0.2s;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             font-family: 'Outfit', sans-serif;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
@@ -148,23 +148,11 @@
             transform: translateY(1px);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-            margin-top: 0.75rem;
-            box-shadow: none;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         .btn-text {
             background: none;
             color: var(--text-muted);
             padding: 0.5rem;
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
             font-size: 0.85rem;
             font-weight: 500;
             width: 100%;
@@ -172,6 +160,7 @@
             cursor: pointer;
             transition: color 0.2s;
             font-family: 'Outfit', sans-serif;
+            text-align: center;
         }
 
         .btn-text:hover {
@@ -215,27 +204,34 @@
     <div class="decoration decoration-2"></div>
 
     <div class="container">
-        <h2>Kirish</h2>
-        <p class="subtitle">Tizimga kirish uchun ma'lumotlarni kiriting</p>
+        <h2>Ro'yxatdan o'tish</h2>
+        <p class="subtitle">Ro'yxatdan o'tish uchun quyidagi formani to'ldiring</p>
 
         <div id="global-notification" class="error-msg" style="margin-bottom: 1rem;"></div>
 
         <div class="form-group">
-            <label for="login_username">Ismiz / Username</label>
-            <input type="text" id="login_username" placeholder="Ali" required>
+            <label for="username">Ismiz</label>
+            <input type="text" id="username" placeholder="Ali" required>
         </div>
 
         <div class="form-group">
-            <label for="login_password">Parol</label>
-            <input type="password" id="login_password" placeholder="••••••••" required>
+            <label for="email">Email Adres</label>
+            <input type="email" id="email" placeholder="ali@example.com" required>
         </div>
 
-        <div id="login-error" class="error-msg">Noto'g'ri ism yoki parol kiritildi</div>
+        <div class="form-group">
+            <label for="password">Parol</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+        </div>
 
-        <button class="btn" onclick="loginUser()">Kirish (Login)</button>
-        <button class="btn btn-secondary" onclick="window.location.href='register.html'">Ro'yxatdan o'tish
-            (Register)</button>
-        <button class="btn-text" onclick="forgotPassword()">Parolni unutdingizmi? (Forgot password)</button>
+        <div class="form-group">
+            <label for="confirm_password">Parolni tasdiqlang</label>
+            <input type="password" id="confirm_password" placeholder="••••••••" required>
+            <div id="password-error" class="error-msg">Parol bir xil emas</div>
+        </div>
+
+        <button class="btn" onclick="registerUser()">Ro'yxatdan o'tish</button>
+        <button class="btn-text" onclick="window.location.href='/login'">Hisobingiz bormi? Kirish (Login)</button>
     </div>
 
     <script src="/static/scripts/scripts.js"></script>

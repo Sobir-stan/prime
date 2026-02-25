@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Clicker | Prime App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111827;
+            --text-color: #f3f4f6;
+            --cookie-color: #d28e46;
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --panel-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #1f2937, var(--bg-color));
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Top Bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--panel-border);
+            z-index: 10;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #fbbf24, #d97706);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #4f46e5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        /* Main Game Area */
+        main {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        .click-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Stats Display */
+        .stats {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .cookie-count {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .cps {
+            font-size: 1.2rem;
+            color: #9ca3af;
+            margin: 0;
+        }
+
+        /* The Cookie */
+        .cookie-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        .cookie {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #e8a760, #a95b12);
+            border-radius: 50%;
+            box-shadow:
+                inset -15px -15px 30px rgba(0, 0, 0, 0.5),
+                inset 10px 10px 20px rgba(255, 255, 255, 0.4),
+                0 20px 40px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            position: relative;
+        }
+
+        @keyframes clickAnim {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(0.92);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .cookie.clicked {
+            animation: clickAnim 0.1s ease-out;
+        }
+
+        /* Chocolate Chips */
+        .chip {
+            position: absolute;
+            background: #3b1e08;
+            border-radius: 50%;
+            box-shadow: inset -2px -2px 5px rgba(0, 0, 0, 0.6);
+        }
+
+        .chip:nth-child(1) {
+            width: 35px;
+            height: 35px;
+            top: 20%;
+            left: 30%;
+        }
+
+        .chip:nth-child(2) {
+            width: 25px;
+            height: 25px;
+            top: 45%;
+            left: 65%;
+        }
+
+        .chip:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 60%;
+            left: 30%;
+        }
+
+        .chip:nth-child(4) {
+            width: 30px;
+            height: 30px;
+            top: 30%;
+            left: 70%;
+        }
+
+        .chip:nth-child(5) {
+            width: 20px;
+            height: 20px;
+            top: 75%;
+            left: 55%;
+        }
+
+        .chip:nth-child(6) {
+            width: 35px;
+            height: 35px;
+            top: 40%;
+            left: 15%;
+            border-radius: 40% 60% 50% 50%;
+        }
+
+        /* Floating +1 Animation */
+        @keyframes fadeUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .plus-one {
+            position: absolute;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            animation: fadeUp 1s ease-out forwards;
+            z-index: 100;
+        }
+
+        /* Upgrades Panel */
+        .upgrades-panel {
+            width: 350px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--panel-border);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .upgrades-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upgrade-card:hover:not(.disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-card:active:not(.disabled) {
+            transform: translateY(0);
+        }
+
+        .upgrade-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .upgrade-info h4 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.1rem;
+        }
+
+        .upgrade-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .upgrade-cost {
+            font-weight: bold;
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        @media screen and (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+
+            .upgrades-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--panel-border);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="title">Cookie Clicker</div>
+        <div class="user-info">
+            <div class="user-avatar" id="avatarInitial">U</div>
+            <span id="usernameDisplay">User</span>
+        </div>
+    </header>
+
+    <main>
+        <section class="click-area">
+            <div class="stats">
+                <p class="cookie-count"><span id="cookies">0</span></p>
+                <p class="cps">cookies per second: <span id="cps">0</span></p>
+            </div>
+
+            <div class="cookie-wrapper">
+                <div class="cookie" id="bigCookie">
+                    <div class="chip"></div>
+                    <div class="chip"></div>
+                    <div class="chip"></div>
+                    <div class="chip"></div>
+                    <div class="chip"></div>
+                    <div class="chip"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="upgrades-panel">
+            <h3 class="upgrades-title">Store</h3>
+
+            <div class="upgrade-card disabled" id="upgradeCursor" onclick="buyUpgrade('cursor')">
+                <div class="upgrade-info">
+                    <h4>Cursor</h4>
+                    <p>Autoclicks once every 10 seconds.</p>
+                </div>
+                <div class="upgrade-cost">
+                    <span id="costCursor">15</span> 🍪
+                </div>
+            </div>
+
+            <div class="upgrade-card disabled" id="upgradeGrandma" onclick="buyUpgrade('grandma')">
+                <div class="upgrade-info">
+                    <h4>Grandma</h4>
+                    <p>Bakes 1 cookie per second.</p>
+                </div>
+                <div class="upgrade-cost">
+                    <span id="costGrandma">100</span> 🍪
+                </div>
+            </div>
+
+            <div class="upgrade-card disabled" id="upgradeFactory" onclick="buyUpgrade('factory')">
+                <div class="upgrade-info">
+                    <h4>Factory</h4>
+                    <p>Produces 8 cookies per second.</p>
+                </div>
+                <div class="upgrade-cost">
+                    <span id="costFactory">1000</span> 🍪
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/scripts/clicker.js"></script>
+</body>
+
+</html>
