@@ -10,6 +10,6 @@ class New_user(BaseModel):
     email: str
     password: str = Field(..., min_length=6)
 
-class login_user(BaseModel):
+class Login_user(BaseModel):
     username: str
     password: str

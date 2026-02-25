@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
-from app.schemas import Body_test, New_user, login_user
+from app.schemas import Body_test, New_user, Login_user
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,7 +86,7 @@ def register_user(user: New_user):
     print(user.username, user.email, user.password)
     return {"msg": "ok "}
 
-@app.get("/clicker.html", response_class=HTMLResponse)
+@app.get("/clicker", response_class=HTMLResponse)
 def clik():
     with open(BASE_DIR/"frontend/clicker.html", "r", encoding="utf-8") as f:
         return f.read()
@@ -97,14 +97,15 @@ def login_user():
         return f.read()
 
 @app.post("/login")
-def login_user(user: New_user):
+def login_user(user: Login_user):
     df = ensure_csv_exist()
     match_username = df[
         (df["username"] == user.username)&
         (df["password"] == user.password)
     ]
     if not match_username.empty:
-        return RedirectResponse(url="/cliker", status_code=302)
-    else:
-        return {"login": "failed"}
+        print("successfully logged in")
+        return RedirectResponse(url="/clicker", status_code=302)
+
+    return {"msg": "ok "}
 
