@@ -108,4 +108,3 @@ def login_user(user: Login_user):
         return RedirectResponse(url="/clicker", status_code=302)
 
     return {"msg": "ok "}
-
