@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
 from app.schemas import Body_test, New_user, Login_user
@@ -10,12 +10,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 app = FastAPI()
 app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
 
-
 @app.get("/product/{id}")
 def login(id : int):
     print(id)
     return {"id": id}
-
 
 @app.get("/product/")
 def login(param : int):
@@ -73,11 +71,11 @@ def check_username(username, email):
     else:
         return None
 
-@app.get("/register.html", response_class=HTMLResponse)
+
+@app.get("/register", response_class=HTMLResponse)
 def register_user():
     with open(BASE_DIR/"frontend/register.html", "r", encoding="utf-8") as f:
         return f.read()
-
 
 @app.post("/register")
 def register_user(user: New_user):
@@ -86,25 +84,32 @@ def register_user(user: New_user):
     print(user.username, user.email, user.password)
     return {"msg": "ok "}
 
-@app.get("/clicker", response_class=HTMLResponse)
-def clik():
-    with open(BASE_DIR/"frontend/clicker.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/login", response_class=HTMLResponse)
-def login_user():
+@app.get("/", response_class=HTMLResponse)
+def register_user():
     with open(BASE_DIR/"frontend/login.html", "r", encoding="utf-8") as f:
         return f.read()
 
-@app.post("/login")
-def login_user(user: Login_user):
-    df = ensure_csv_exist()
-    match_username = df[
-        (df["username"] == user.username)&
-        (df["password"] == user.password)
-    ]
-    if not match_username.empty:
-        print("successfully logged in")
-        return RedirectResponse(url="/clicker", status_code=302)
 
-    return {"msg": "ok "}
+@app.post("/")
+def register_user(user: Login_user):
+    df = ensure_csv_exist()
+
+    if df.empty:
+        return {"msg": "fayl mavjud emas"}
+
+    user_row = df[df["username"] == user.username]
+    if user_row.empty:
+        return {"msg": "foydalanuvchi mavjud emas"}
+
+    user_row = user_row.iloc[0].to_dict()
+
+    if user_row["password"] != user.password:
+        return {"status": "parol", "statusText": "parol to'g'ri emas"}
+
+    return {"login": "success "}
+
+
+@app.get("/clicker", response_class=HTMLResponse)
+def register_user():
+    with open(BASE_DIR/"frontend/clicker.html", "r", encoding="utf-8") as f:
+        return f.read()

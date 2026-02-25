@@ -103,7 +103,7 @@ async function loginUser() {
 
     try {
         console.log(`[Login Request] Sending POST to /login...`, data);
-        const response = await fetch('/login', {
+        const response = await fetch('/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -130,7 +130,6 @@ async function loginUser() {
                 showNotification("Noto'g'ri ism yoki parol kiritildi.", 'error');
             }
         }
-
     } catch (error) {
         console.error('[Login Exception] Request failed to complete:', error);
         showNotification("Kirish paytida server bilan xatolik yuz berdi. (Server connection error)", 'error');
