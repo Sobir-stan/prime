@@ -99,12 +99,12 @@ def register_user(user: Login_user):
 
     user_row = df[df["username"] == user.username]
     if user_row.empty:
-        return {"msg": "foydalanuvchi mavjud emas"}
+        raise HTTPException(status_code=404, detail="foydalanuvchi mavjud emas")
 
     user_row = user_row.iloc[0].to_dict()
 
     if user_row["password"] != user.password:
-        return {"status": "parol", "statusText": "parol to'g'ri emas"}
+        raise HTTPException(status_code=401, detail="parol to'g'ri emas")
 
     return {"login": "success "}
 
