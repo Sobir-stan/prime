@@ -40,7 +40,7 @@ def ensure_progress_csv_exist():
     csv_path = get_progress_csv_path()
     print("111")
     if not csv_path.exists():
-        df = pd.DataFrame(columns=("username","cookies", "totalCookies", "cps", "cursor", "grandma", "factory"))
+        df = pd.DataFrame(columns=("username","cookies", "totalCookies", "cps", "cursor_count", "grandma_count", "factory_count"))
         df.index.name = "id"
         df.to_csv(csv_path, index=True)
 
@@ -148,7 +148,22 @@ def save_progress(progress : SaveProgress):
     df.to_csv(csv_path, index=True)
     return {"msg": "progress saqlandi"}
 
-@app.get("/load_progress/{username}"):
+@app.get("/load_progress/{username}")
 def laod_progress(username: str):
     df = ensure_progress_csv_exist()
-    user_row
+    user_row =df[df["username"] == username]
+    print("1")
+    if user_row.empty:
+
+        return {
+            "username": username,
+            "cookies" : 0.0,
+            "totalCookies" : 0.0,
+            "cps" : 0.0,
+            "cursor_count" : 0,
+            "grandma_count" : 0,
+            "factory_count" : 0,
+        }
+    print("2")
+
+    return user_row.iloc[0].to_dict()
