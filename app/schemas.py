@@ -14,3 +14,13 @@ class New_user(BaseModel):
 class Login_user(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
+
+
+class SaveProgress(BaseModel):
+    username: str
+    cookies: float
+    totalCookies: float
+    cps: float
+    cursor_count : int
+    grandma_count : int
+    factory_count : int
