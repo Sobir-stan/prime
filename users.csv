@@ -1,5 +1,3 @@
-username,password,email
-ali,reza,i
-ali heydar,reza,i
-ali,reza,i
-ali,reza,i
+id,username,email,password
+0,sobir,asd@stanford.com,123456
+1,asd,asd,123456
