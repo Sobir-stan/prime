@@ -17,12 +17,78 @@ const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
 
 // Initialize User
-function initUser() {
-    // Attempt to get user info from localStorage or session, placeholder for now
-    // Actually, in login.js we can set localStorage on successful login.
-    const user = localStorage.getItem('primeUser') || "Player 1";
+async function initUser() {
+    // Get user info from localStorage
+    const user = localStorage.getItem('primeUser');
+    if (!user) {
+        window.location.href = '/login';
+        return;
+    }
+
     usernameDisplay.textContent = user;
     avatarInitial.textContent = user.charAt(0).toUpperCase();
+
+    // Load saves from server
+    await loadProgress(user);
+}
+
+// Load Progress from Backend
+async function loadProgress(username) {
+    try {
+        const response = await fetch(`/load_progress/${username}`);
+        if (response.ok) {
+            const data = await response.json();
+
+            cookies = data.cookies;
+            totalCookies = data.totalCookies;
+
+            upgrades.cursor.count = data.cursor_count;
+            upgrades.cursor.cost = upgrades.cursor.baseCost * Math.pow(1.15, data.cursor_count);
+
+            upgrades.grandma.count = data.grandma_count;
+            upgrades.grandma.cost = upgrades.grandma.baseCost * Math.pow(1.15, data.grandma_count);
+
+            upgrades.factory.count = data.factory_count;
+            upgrades.factory.cost = upgrades.factory.baseCost * Math.pow(1.15, data.factory_count);
+
+            recalculateCPS();
+            updateUI();
+        } else {
+            console.error("Failed to load progress from server.");
+            updateUI();
+        }
+    } catch (e) {
+        console.error("Connection error loading progress:", e);
+        updateUI();
+    }
+}
+
+// Save Progress to Backend
+async function saveProgress() {
+    const user = localStorage.getItem('primeUser');
+    if (!user) return;
+
+    const saveData = {
+        username: user,
+        cookies: cookies,
+        totalCookies: totalCookies,
+        cps: cps,
+        cursor_count: upgrades.cursor.count,
+        grandma_count: upgrades.grandma.count,
+        factory_count: upgrades.factory.count
+    };
+
+    try {
+        await fetch('/save_progress', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(saveData)
+        });
+    } catch (e) {
+        console.error("Connection error saving progress:", e);
+    }
 }
 
 // Format numbers securely
@@ -131,6 +197,10 @@ setInterval(() => {
     }
 }, 100);
 
+// Auto-Save Loop (runs every 10 seconds)
+setInterval(() => {
+    saveProgress();
+}, 10000);
+
 // Initialize game
 initUser();
-updateUI();
