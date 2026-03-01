@@ -167,3 +167,22 @@ def laod_progress(username: str):
     print("2")
 
     return user_row.iloc[0].to_dict()
+
+@app.get("/rating", response_class=HTMLResponse)
+def rating_page():
+    with open(BASE_DIR/"frontend/rating.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/get_rating")
+def get_rating():
+    df = ensure_progress_csv_exist()
+    if df.empty:
+        return []
+
+    df["totalCookies"] = pd.to_numeric(df["totalCookies"], errors="coerce").fillna(0)
+
+    df_sorted = df.sort_values(by="totalCookies", ascending=False)
+    top_players = df_sorted.head(10)
+
+    result = top_players[["username", "totalCookies", "cps"]].to_dict(orient="records")
+    return result
