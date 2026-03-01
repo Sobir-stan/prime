@@ -148,7 +148,8 @@ def save_progress(progress : SaveProgress):
     df.to_csv(csv_path, index=True)
     return {"msg": "progress saqlandi"}
 
-@app.get("/load_progress/{username}"):
-def laod_progress(username: str):
-    df = ensure_progress_csv_exist()
-    user_row
+# @app.get("/load_progress/{username}"):
+# def laod_progress(username: str):
+#     df = ensure_progress_csv_exist()
+#     if df.empty:
+#         register_user()
