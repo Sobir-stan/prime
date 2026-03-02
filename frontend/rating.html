@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reyting | Prime App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #111827;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --panel-border: rgba(255, 255, 255, 0.1);
+            --primary-color: #fbbf24;
+            --primary-hover: #f59e0b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #1f2937, var(--bg-color));
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .decoration {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.1), transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .decoration-1 {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            left: -200px;
+        }
+
+        .decoration-2 {
+            width: 500px;
+            height: 500px;
+            bottom: -150px;
+            right: -150px;
+        }
+
+        .top-nav {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 2rem;
+            z-index: 10;
+            position: relative;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            border: 1px solid var(--panel-border);
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-2px);
+        }
+
+        .container {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(to right, #fbbf24, #d97706);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .rank {
+            font-weight: 800;
+            color: var(--primary-color);
+            width: 60px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .score {
+            font-family: monospace;
+            font-size: 1.15rem;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .cps {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .loading, .error {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        
+        .error {
+            color: #ef4444;
+        }
+
+        /* Top 3 styling */
+        tr:nth-child(1) .rank { color: #fbbf24; font-size: 1.4rem; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+        tr:nth-child(2) .rank { color: #9ca3af; font-size: 1.25rem; }
+        tr:nth-child(3) .rank { color: #d97706; font-size: 1.15rem; }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            .container { padding: 1.5rem; }
+            th, td { padding: 1rem 0.5rem; }
+            .score { font-size: 1rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
+
+    <div class="top-nav">
+        <a href="/clicker" class="btn-back">← O'yinga qaytish</a>
+    </div>
+
+    <div class="container">
+        <h2>Top O'yinchilar</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">O'rin</th>
+                        <th>O'yinchi</th>
+                        <th>Jami Cookie</th>
+                        <th>Tezlik (CPS)</th>
+                    </tr>
+                </thead>
+                <tbody id="rating-body">
+                    <!-- Data will be loaded via JS -->
+                </tbody>
+            </table>
+            <div id="loading" class="loading">Ma'lumotlar yuklanmoqda...</div>
+        </div>
+    </div>
+
+    <script src="/static/scripts/rating.js"></script>
+</body>
+
+</html>
