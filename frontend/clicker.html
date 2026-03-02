@@ -298,11 +298,20 @@
 </head>
 
 <body>
-    <header>
+   <header>
         <div class="title">Cookie Clicker</div>
-        <div class="user-info">
-            <div class="user-avatar" id="avatarInitial">U</div>
-            <span id="usernameDisplay">User</span>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/rating"
+                style="color: #111827; background: #fbbf24; text-decoration: none; font-weight: bold; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; transition: transform 0.2s;">🏆
+                Reyting</a>
+            <div class="user-info" style="align-items: center; gap: 0.8rem;">
+                <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+                    <span id="usernameDisplay" style="font-weight: bold;">User</span>
+                    <span id="userRankDisplay" style="font-size: 0.8rem; color: #fbbf24; display: none;">O'rin: <strong
+                            id="userRank">#...</strong></span>
+                </div>
+                <div class="user-avatar" id="avatarInitial">U</div>
+            </div>
         </div>
     </header>
 
