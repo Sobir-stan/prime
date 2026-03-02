@@ -2,90 +2,26 @@ from fastapi import FastAPI, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
+from app.database import init_db, get_db_connection
 from app.schemas import Body_test, New_user, Login_user, SaveProgress
-import pandas as pd
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+init_db()
 
 app = FastAPI()
 app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
 
-@app.get("/product/{id}")
-def login(id : int):
-    print(id)
-    return {"id": id}
 
-@app.get("/product/")
-def login(param : int):
-    print(param)
-    return {"param": param}
-
-@app.post("/body_test")
-def body_test(data : Body_test):
-    print(data)
-    return data
-
-@app.post("/send")
-def get_entered_data(text : dict):
-    print(text)
-    return {"text": text}
-
-def get_csv_path():
-    return BASE_DIR/"users.csv"
-
-def get_progress_csv_path():
-    return BASE_DIR/"progress.csv"
-
-def ensure_progress_csv_exist():
-    csv_path = get_progress_csv_path()
-    print("111")
-    if not csv_path.exists():
-        df = pd.DataFrame(columns=("username","cookies", "totalCookies", "cps", "cursor_count", "grandma_count", "factory_count"))
-        df.index.name = "id"
-        df.to_csv(csv_path, index=True)
-
-        return df
-    else:
-        return pd.read_csv(csv_path, index_col="id")
-
-
-def ensure_csv_exist():
-    csv_path = get_csv_path()
-
-    if not csv_path.exists():
-        df = pd.DataFrame(columns=("username", "email", "password"))
-        df.index.name= "id"
-        df.to_csv(csv_path, index=True)
-        return df
-    else:
-        return pd.read_csv(csv_path, index_col="id")
-
-def save_to_csv(user):
-
-    error_msg = check_username(user.username, user.email)
-    if error_msg:
-        raise ValueError(error_msg)
-
-    df = ensure_csv_exist()
-    csv_path = get_csv_path()
-
-    new_user_df = pd.DataFrame([user.model_dump()])
-    updated_df = pd.concat([df, new_user_df],ignore_index=True)
-    updated_df.index.name = "id"
-
-    updated_df.to_csv(csv_path,index=True )
-
-def check_username(username, email):
-    df = ensure_csv_exist()
-    if df.empty:
-        return None
-
-    if (df["username"] == username).any():
-        return f"{username} nomli foydalanuvchi mavjud"
-    elif (df["email"] == email).any():
-        return f"{email} ishlatilgan"
-    else:
-        return None
+def save_user(user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+        (user.username, user.email, user.password)
+    )
+    cursor.commit()
+    cursor.close()
 
 
 @app.get("/register", response_class=HTMLResponse)
@@ -95,7 +31,7 @@ def register_user():
 
 @app.post("/register")
 def register_user(user: New_user):
-    save_to_csv(user)
+    save_user(user)
 
     print(user.username, user.email, user.password)
     return {"msg": "ok "}
@@ -108,7 +44,7 @@ def register_user():
 
 @app.post("/")
 def register_user(user: Login_user):
-    df = ensure_csv_exist()
+
 
     if df.empty:
         return {"msg": "fayl mavjud emas"}
@@ -188,13 +124,14 @@ def get_rating():
 def get_rank(username: str):
     df = ensure_progress_csv_exist()
     if df.empty:
-        return "NaN"
+        return {"rank": 0}
 
     df["totalCookies"] = pd.to_numeric(df["totalCookies"], errors="coerce").fillna(0)
-    df_sorted = df.sort_values(by="totalCookies", ascending=False)
+    df_sorted = df.sort_values(by="totalCookies", ascending=False).reset_index(drop=True)
 
     user_row = df_sorted[df_sorted["username"] == username]
     if not user_row.empty:
         rank = int(user_row.index[0]) + 1
         return {"rank": rank}
-    return {"rank": "0"}
+
+    return {"rank": 0}
