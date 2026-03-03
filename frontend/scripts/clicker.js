@@ -197,10 +197,40 @@ setInterval(() => {
     }
 }, 100);
 
+async function fetchUserRank(){
+    const user = localStorage.getItem("primeUser");
+
+    if (!user) return;
+
+    try{
+        const response = await fetch(`/get_rank/${user}`);
+         console.log(response);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.rank > 0){
+                document.getElementById('userRankDisplay').style.display = 'block';
+                document.getElementById('userRank').textContent = `#${data.rank}`;
+
+            }
+            const rankEl = document.getElementById("userRank");
+            rankEl.textContent = `#${data.rank}`;
+        }
+    }
+
+    catch
+        (e)
+        {
+            console.error("Connection error fetching rank:", e);
+        }
+
+}
+
 // Auto-Save Loop (runs every 10 seconds)
 setInterval(() => {
     saveProgress();
+    fetchUserRank();
 }, 10000);
 
 // Initialize game
 initUser();
+fetchUserRank();

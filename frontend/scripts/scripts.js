@@ -65,7 +65,7 @@ async function registerUser() {
 
             // Redirect after brief delay
             setTimeout(() => {
-                window.location.href = '/login';
+                window.location.href = '/';
             }, 1000);
         } else {
             console.error(`[Register Error] Server returned status ${response.status} ${response.statusText}`);
