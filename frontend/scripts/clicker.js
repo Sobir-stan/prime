@@ -233,4 +233,3 @@ setInterval(() => {
 
 // Initialize game
 initUser();
-fetchUserRank();
