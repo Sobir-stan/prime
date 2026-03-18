@@ -14,41 +14,24 @@ app = FastAPI()
 app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
 
 
-def save_user(user, db: Session):
+def save_user(user: New_user, db: Session):
     error_msg = check_username(user.username, user.email, db)
     if error_msg:
         raise ValueError(error_msg)
+    new_user = User(username=user.username, email=user.email, password=user.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
 def check_username(username, email, db: Session):
-    db_username = db.query(User).filter(User.username == username).first()
-    if db_username:
+
+    if db.query(User).filter(User.username == username).first():
         return f"{username} nomli foydalanuvchi mavjud"
 
+    if db.query(User).filter(User.email == email).first():
+        return f"{email} ishlatilgan email"
 
-# def create_progress(progress: SaveProgress):
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         "INSERT INTO progress (username, cookies, totalCookies, cps, cursor_count, grandma_count, factory_count) VALUES (?, ?, ?, ?, ?, ?, ?)",
-#         (progress.username, progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count,
-#          progress.grandma_count, progress.factory_count)
-#     )
-#     conn.commit()
-#     conn.close()
-#
-#
-# def update_progress(progress: SaveProgress):
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         "UPDATE progress SET cookies = ?, totalCookies = ?, cps = ?, cursor_count = ?, grandma_count = ?, factory_count = ? WHERE username = ?",
-#         (progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count, progress.grandma_count,
-#          progress.factory_count, progress.username)
-#     )
-#     conn.commit()
-#     conn.close()
-
-
+    return None
 
 
 @app.get("/register", response_class=HTMLResponse)
@@ -58,9 +41,12 @@ def register_user():
 
 @app.post("/register")
 def register_user(user: New_user, db:Session = Depends(get_db)):
-    save_user(user, db)
-    print(user.username, user.email, user.password)
-    return {"msg": "ok "}
+    try:
+        save_user(user, db)
+        print(user.username, user.email, user.password)
+        return {"msg": "ok "}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/", response_class=HTMLResponse)
 def register_user():
@@ -68,17 +54,16 @@ def register_user():
         return f.read()
 
 @app.post("/")
-def login(user: Login_user):
-    row = getUser(user.username)
-
-    user_db_password = str(row["password"])
+def login(user: Login_user, db : Session = Depends(get_db)):
+    row = db.query(User).filter(User.username == user.username).first()
 
     if not row:
         raise HTTPException(status_code=404, detail="foydalanuvchi mavjud emas")
-    if user_db_password != user.password:
+    if str(row.password) != user.password:
         raise HTTPException(status_code=401, detail="parol to'g'ri emas")
 
     return {"login": "success "}
+
 
 @app.get("/clicker", response_class=HTMLResponse)
 def register_user():
@@ -86,19 +71,34 @@ def register_user():
         return f.read()
 
 @app.post("/save_progress")
-def save_progress(progress : SaveProgress):
+def save_progress(progress : SaveProgress, db : Session = Depends(get_db)):
+    db_progress = db.query(Progress).filter(Progress.username == progress.username).first()
 
-    row = getProgress(progress.username)
-    if not row:
-        create_progress(progress)
+    if not db_progress:
+        new_progress = Progress(
+            username=progress.username,
+            cookies=progress.cookies,
+            totalCookies=progress.totalCookies,
+            cps=progress.cps,
+            cursor_count=progress.cursor_count,
+            grandma_count=progress.grandma_count,
+            factory_count=progress.factory_count
+        )
+        db.add(new_progress)
     else:
-        update_progress(progress)
+        db_progress.cookies = progress.cookies
+        db_progress.totalCookies = progress.totalCookies
+        db_progress.cps = progress.cps
+        db_progress.cursor_count = progress.cursor_count
+        db_progress.grandma_count = progress.grandma_count
+        db_progress.factory_count = progress.factory_count
 
+    db.commit()
     return {"msg": "progress saqlandi"}
 
 @app.get("/load_progress/{username}")
-def laod_progress(username: str):
-    row = getProgress(username)
+def laod_progress(username: str, db: Session = Depends(get_db)):
+    row = db.query(Progress).filter(Progress.username == username).first()
     if not row:
         return {
                 "username": username,
@@ -110,13 +110,13 @@ def laod_progress(username: str):
                 "factory_count" : 0,
             }
     return {
-        "username": row["username"],
-        "cookies": row["cookies"],
-        "totalCookies": row["totalCookies"],
-        "cps": row["cps"],
-        "cursor_count": row["cursor_count"],
-        "grandma_count": row["grandma_count"],
-        "factory_count": row["factory_count"],
+        "username": row.username,
+        "cookies" : row.cookies,
+        "totalCookies" : row.totalCookies,
+        "cps" : row.cps,
+        "cursor_count" : row.cursor_count,
+        "grandma_count" : row.grandma_count,
+        "factory_count" : row.factory_count,
     }
 
 
@@ -126,13 +126,25 @@ def rating_page():
         return f.read()
 
 @app.get("/get_rating")
-def get_rating():
-    pass
-
-    # return result
+def get_rating(db: Session = Depends(get_db)):
+    top_progress = db.query(Progress).order_by(Progress.totalCookies.desc()).limit(10).all()
+    result= []
+    for p in top_progress:
+        result.append({
+            "username": p.username,
+            "totalCookies": p.totalCookies,
+            "cps": p.cps
+        })
+    return result
 
 @app.get("/get_rank/{username}")
-def get_rank(username: str):
+def get_rank(username: str, db: Session = Depends(get_db)):
+    db_progrerss =  db.query(Progress).filter(Progress.username == username).first()
 
+    if not db_progrerss:
+        return {"rank": 0}
 
-    return
+    user_score = db_progrerss.totalCookies
+    rank_ahead = db.query(Progress).filter(Progress.totalCookies > user_score).count()
+
+    return {"rank": rank_ahead + 1}
