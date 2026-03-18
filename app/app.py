@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
-from app.database import init_db, get_db_connection
 from app.schemas import Body_test, New_user, Login_user, SaveProgress
+from sqlalchemy.orm import Session
+from app.database import init_db, get_db, User, Progress
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,52 +14,39 @@ app = FastAPI()
 app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
 
 
-def save_user(user):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-        (user.username, user.email, user.password)
-    )
-    conn.commit()
-    conn.close()
+def save_user(user, db: Session):
+    error_msg = check_username(user.username, user.email, db)
+    if error_msg:
+        raise ValueError(error_msg)
 
-def baseGetTableData(table, username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table} WHERE username = ?", (username,))
-    row = cursor.fetchone()
-    conn.close()
-    return row
-
-def getUser(username):
-    return baseGetTableData("users", username)
-
-def getProgress(username: str):
-    return baseGetTableData("progress", username)
-
-def create_progress(progress: SaveProgress):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO progress (username, cookies, totalCookies, cps, cursor_count, grandma_count, factory_count) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (progress.username, progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count,
-         progress.grandma_count, progress.factory_count)
-    )
-    conn.commit()
-    conn.close()
+def check_username(username, email, db: Session):
+    db_username = db.query(User).filter(User.username == username).first()
+    if db_username:
+        return f"{username} nomli foydalanuvchi mavjud"
 
 
-def update_progress(progress: SaveProgress):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE progress SET cookies = ?, totalCookies = ?, cps = ?, cursor_count = ?, grandma_count = ?, factory_count = ? WHERE username = ?",
-        (progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count, progress.grandma_count,
-         progress.factory_count, progress.username)
-    )
-    conn.commit()
-    conn.close()
+# def create_progress(progress: SaveProgress):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         "INSERT INTO progress (username, cookies, totalCookies, cps, cursor_count, grandma_count, factory_count) VALUES (?, ?, ?, ?, ?, ?, ?)",
+#         (progress.username, progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count,
+#          progress.grandma_count, progress.factory_count)
+#     )
+#     conn.commit()
+#     conn.close()
+#
+#
+# def update_progress(progress: SaveProgress):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         "UPDATE progress SET cookies = ?, totalCookies = ?, cps = ?, cursor_count = ?, grandma_count = ?, factory_count = ? WHERE username = ?",
+#         (progress.cookies, progress.totalCookies, progress.cps, progress.cursor_count, progress.grandma_count,
+#          progress.factory_count, progress.username)
+#     )
+#     conn.commit()
+#     conn.close()
 
 
 
@@ -69,9 +57,8 @@ def register_user():
         return f.read()
 
 @app.post("/register")
-def register_user(user: New_user):
-    save_user(user)
-
+def register_user(user: New_user, db:Session = Depends(get_db)):
+    save_user(user, db)
     print(user.username, user.email, user.password)
     return {"msg": "ok "}
 
@@ -140,30 +127,12 @@ def rating_page():
 
 @app.get("/get_rating")
 def get_rating():
-    # df = ensure_progress_csv_exist()
-    # if df.empty:
-    #     return []
-    #
-    # df["totalCookies"] = pd.to_numeric(df["totalCookies"], errors="coerce").fillna(0)
-    # df_sorted = df.sort_values(by="totalCookies", ascending=False)
-    # top_players = df_sorted.head(10)
-    #
-    # result = top_players[["username", "totalCookies", "cps"]].to_dict(orient="records")
-    # return result
     pass
+
+    # return result
 
 @app.get("/get_rank/{username}")
 def get_rank(username: str):
-    # df = ensure_progress_csv_exist()
-    # if df.empty:
-    #     return {"rank": 0}
-    #
-    # df["totalCookies"] = pd.to_numeric(df["totalCookies"], errors="coerce").fillna(0)
-    # df_sorted = df.sort_values(by="totalCookies", ascending=False).reset_index(drop=True)
-    #
-    # user_row = df_sorted[df_sorted["username"] == username]
-    # if not user_row.empty:
-    #     rank = int(user_row.index[0]) + 1
-    #     return {"rank": rank}
 
-    return {"rank": 0}
+
+    return
