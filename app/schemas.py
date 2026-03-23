@@ -8,12 +8,12 @@ class Body_test(BaseModel):
 class New_user(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: str
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=3)
 
 
 class Login_user(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=3)
 
 
 class SaveProgress(BaseModel):
