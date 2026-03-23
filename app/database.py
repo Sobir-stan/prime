@@ -32,8 +32,24 @@ class Progress(Base):
     factory_count = Column(Integer, nullable=False, default=0)
 
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        admin_user = db.query(User).filter(User.username == "admin").first()
+        if not admin_user:
+            hashed_password = pwd_context.hash("123")
+            admin_user = User(username="admin", email="admin@admin.com", password=hashed_password)
+            db.add(admin_user)
+            db.commit()
+    except Exception as e:
+        print(f"Error initializing default admin: {e}")
+    finally:
+        db.close()
 
 def get_db():
     db = SessionLocal()
@@ -41,3 +57,4 @@ def get_db():
         yield db
     finally:
         db.close()
+

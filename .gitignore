@@ -1,3 +1,27 @@
-.venv
-.idea
-__pycache__
+# Core python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+env/
+.env
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+
+# Databases and Local Data
+*.db
+*.sqlite
+*.sqlite3
+database.db
+users.csv
+progress.csv
+
+# OS files
+.DS_Store
+Thumbs.db

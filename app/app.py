@@ -1,11 +1,44 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request, Response
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 from starlette.staticfiles import StaticFiles
 from app.schemas import Body_test, New_user, Login_user, SaveProgress
 from sqlalchemy.orm import Session
 from app.database import init_db, get_db, User, Progress
+import jwt
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
 
+SECRET_KEY = "your-secret-key-please-change"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def get_current_user_from_cookie(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Token topilmadi. (Token not found)")
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Yaroqsiz token. (Invalid)")
+        return username
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token muddati tugagan. (Expired)")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Xato token. (Invalid token)")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 init_db()
@@ -18,7 +51,7 @@ def save_user(user: New_user, db: Session):
     error_msg = check_username(user.username, user.email, db)
     if error_msg:
         raise ValueError(error_msg)
-    new_user = User(username=user.username, email=user.email, password=user.password)
+    new_user = User(username=user.username, email=user.email, password=pwd_context.hash(user.password))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -54,13 +87,19 @@ def register_user():
         return f.read()
 
 @app.post("/")
-def login(user: Login_user, db : Session = Depends(get_db)):
+def login(user: Login_user, response: Response, db : Session = Depends(get_db)):
     row = db.query(User).filter(User.username == user.username).first()
 
     if not row:
         raise HTTPException(status_code=404, detail="foydalanuvchi mavjud emas")
-    if str(row.password) != user.password:
+    if not pwd_context.verify(user.password, str(row.password)):
         raise HTTPException(status_code=401, detail="parol to'g'ri emas")
+
+    access_token = create_access_token(
+        data={"sub": user.username}, 
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    response.set_cookie(key="access_token", value=access_token, httponly=True)
 
     return {"login": "success "}
 
@@ -71,7 +110,10 @@ def register_user():
         return f.read()
 
 @app.post("/save_progress")
-def save_progress(progress : SaveProgress, db : Session = Depends(get_db)):
+def save_progress(progress : SaveProgress, db : Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
+    if current_user != progress.username:
+        raise HTTPException(status_code=403, detail="Ruxsat etilmagan")
+
     db_progress = db.query(Progress).filter(Progress.username == progress.username).first()
 
     if not db_progress:
@@ -97,7 +139,10 @@ def save_progress(progress : SaveProgress, db : Session = Depends(get_db)):
     return {"msg": "progress saqlandi"}
 
 @app.get("/load_progress/{username}")
-def laod_progress(username: str, db: Session = Depends(get_db)):
+def laod_progress(username: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
+    if current_user != username:
+        raise HTTPException(status_code=403, detail="Ruxsat etilmagan")
+
     row = db.query(Progress).filter(Progress.username == username).first()
     if not row:
         return {
