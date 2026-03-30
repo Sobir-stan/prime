@@ -5,7 +5,6 @@ from starlette.staticfiles import StaticFiles
 from app.schemas import Body_test, New_user, Login_user, SaveProgress
 from sqlalchemy.orm import Session
 from app.database import init_db, get_db, User, Progress
-import jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 
@@ -15,30 +14,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-def get_current_user_from_cookie(request: Request):
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=401, detail="Token topilmadi. (Token not found)")
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Yaroqsiz token. (Invalid)")
-        return username
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token muddati tugagan. (Expired)")
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Xato token. (Invalid token)")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 init_db()
