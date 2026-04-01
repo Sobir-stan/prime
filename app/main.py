@@ -1,35 +1,30 @@
-from fastapi import FastAPI, HTTPException, Depends, Request, Response
-from fastapi.responses import HTMLResponse
-from pathlib import Path
+from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
-from app.schemas import Body_test, New_user, Login_user, SaveProgress
-from sqlalchemy.orm import Session
-from app.database import init_db, get_db, User, Progress
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
 
-SECRET_KEY = "your-secret-key-please-change"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+from app.db.database import init_db
+from app.routers import rating
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 init_db()
 
 app = FastAPI()
-app.mount("/static/scripts", StaticFiles(directory=BASE_DIR/"frontend/scripts"), name="static")
+
+app.mount("/static", StaticFiles(directory="/app/static"), name="static")
+
+app.include_router(login.router)
+app.include_router(register.router)
+app.include_router(clicker.router)
+app.include_router(rating.router)
 
 
-def save_user(user: New_user, db: Session):
-    error_msg = check_username(user.username, user.email, db)
-    if error_msg:
-        raise ValueError(error_msg)
-    new_user = User(username=user.username, email=user.email, password=pwd_context.hash(user.password))
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+app = FastAPI()
+
+
+
 
 def check_username(username, email, db: Session):
 
@@ -140,10 +135,7 @@ def laod_progress(username: str, db: Session = Depends(get_db), current_user: st
     }
 
 
-@app.get("/rating", response_class=HTMLResponse)
-def rating_page():
-    with open(BASE_DIR/"frontend/rating.html", "r", encoding="utf-8") as f:
-        return f.read()
+
 
 @app.get("/get_rating")
 def get_rating(db: Session = Depends(get_db)):
