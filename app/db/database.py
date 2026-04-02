@@ -14,7 +14,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        from app.core.config import pwd_context
+        from app.core.security import pwd_context
         admin_user = db.query(User).filter(User.username == "admin").first()
         if not admin_user:
             hashed_password = pwd_context.hash("123")
