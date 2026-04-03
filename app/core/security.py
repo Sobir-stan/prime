@@ -20,12 +20,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 def get_current_user_from_cookie(request: Request):
     token = request.cookies.get("access_token")
     if not token:
-        # Fallback to Authorization header
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            
-    if not token:
         raise HTTPException(status_code=401, detail="Token topilmadi. (Token not found)")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
