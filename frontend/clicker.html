@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cookie Clicker | Prime App</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: #111827;
@@ -298,7 +299,7 @@
 </head>
 
 <body>
-   <header>
+    <header>
         <div class="title">Cookie Clicker</div>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <a href="/rating"
@@ -311,6 +312,8 @@
                             id="userRank">#...</strong></span>
                 </div>
                 <div class="user-avatar" id="avatarInitial">U</div>
+                <button onclick="logoutUser()"
+                    style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.8rem; border-radius: 0.5rem; cursor: pointer; font-family: 'Outfit'; font-weight: bold; margin-left: 0.5rem;">Chiqish</button>
             </div>
         </div>
     </header>
@@ -369,7 +372,7 @@
         </section>
     </main>
 
-    <script src="/static/scripts/clicker.js"></script>
+    <script src="/static/scripts/clicker.js?v=3"></script>
 </body>
 
 </html>

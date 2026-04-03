@@ -1,7 +1,7 @@
-// Utility for Notifications
+
 function showNotification(message, type = 'error') {
     const notifEl = document.getElementById('global-notification');
-    // If element doesn't exist on page, fallback to alert but warn in console
+
     if (!notifEl) {
         console.warn('UI Notification container not found for:', message);
         alert(message);
@@ -13,7 +13,7 @@ function showNotification(message, type = 'error') {
     notifEl.style.display = 'block';
     notifEl.style.opacity = '1';
 
-    // Auto-hide after 5 seconds
+
     setTimeout(() => {
         notifEl.style.opacity = '0';
         setTimeout(() => notifEl.style.display = 'none', 300);
@@ -63,7 +63,7 @@ async function registerUser() {
             console.log(`[Register Success] Server responded:`, result);
             showNotification("Ro'yxatdan o'tish muvaffaqiyatli! (Registration successful)", 'success');
 
-            // Redirect after brief delay
+
             setTimeout(() => {
                 window.location.href = '/';
             }, 1000);
@@ -117,6 +117,7 @@ async function loginUser() {
             showNotification("Kirish muvaffaqiyatli! (Login successful)", 'success');
 
             localStorage.setItem('primeUser', username);
+            if (result.token) localStorage.setItem('primeToken', result.token);
             setTimeout(() => {
                 window.location.href = '/clicker';
             }, 500);

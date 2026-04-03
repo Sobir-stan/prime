@@ -30,7 +30,7 @@ async function fetchRating() {
             const totalCookies = Math.floor(player.totalCookies || 0).toLocaleString();
             const cps = (player.cps || 0).toFixed(1);
 
-            // Adjust rank display based on position
+
             let rankHtml = `#${index + 1}`;
             if (index === 0) rankHtml = `👑 1`;
             if (index === 1) rankHtml = `🥈 2`;

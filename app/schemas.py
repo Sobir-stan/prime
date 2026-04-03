@@ -24,3 +24,7 @@ class SaveProgress(BaseModel):
     cursor_count : int
     grandma_count : int
     factory_count : int
+
+class TelegramAuth(BaseModel):
+    telegram_id: int
+    username: str

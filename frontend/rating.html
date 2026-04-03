@@ -118,7 +118,8 @@
             text-align: left;
         }
 
-        th, td {
+        th,
+        td {
             padding: 1.25rem 1rem;
             border-bottom: 1px solid var(--panel-border);
         }
@@ -188,27 +189,52 @@
             font-size: 0.95rem;
         }
 
-        .loading, .error {
+        .loading,
+        .error {
             text-align: center;
             padding: 3rem;
             color: var(--text-muted);
             font-size: 1.1rem;
         }
-        
+
         .error {
             color: #ef4444;
         }
 
         /* Top 3 styling */
-        tr:nth-child(1) .rank { color: #fbbf24; font-size: 1.4rem; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
-        tr:nth-child(2) .rank { color: #9ca3af; font-size: 1.25rem; }
-        tr:nth-child(3) .rank { color: #d97706; font-size: 1.15rem; }
+        tr:nth-child(1) .rank {
+            color: #fbbf24;
+            font-size: 1.4rem;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        tr:nth-child(2) .rank {
+            color: #9ca3af;
+            font-size: 1.25rem;
+        }
+
+        tr:nth-child(3) .rank {
+            color: #d97706;
+            font-size: 1.15rem;
+        }
 
         @media (max-width: 640px) {
-            body { padding: 1rem; }
-            .container { padding: 1.5rem; }
-            th, td { padding: 1rem 0.5rem; }
-            .score { font-size: 1rem; }
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            th,
+            td {
+                padding: 1rem 0.5rem;
+            }
+
+            .score {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -235,7 +261,7 @@
                     </tr>
                 </thead>
                 <tbody id="rating-body">
-                    <!-- Data will be loaded via JS -->
+
                 </tbody>
             </table>
             <div id="loading" class="loading">Ma'lumotlar yuklanmoqda...</div>
