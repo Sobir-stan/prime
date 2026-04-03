@@ -1,3 +1,5 @@
+# Ushbu fayl Clicker o'yini jarayoniga javob beradigan marshrutlarni saqlaydi.
+# O'yin holatini saqlash (save) va yuklash (load) shu yerda joylashgan.
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -9,25 +11,31 @@ from app.core.security import get_current_user_from_cookie
 
 router = APIRouter()
 
+# Clicker sahifasini brauzerga yuborish
 @router.get("/clicker", response_class=HTMLResponse)
 def clicker_page():
     with open(BASE_DIR/"frontend/clicker.html", "r", encoding="utf-8") as f:
         return f.read()
 
+# O'yinchi holatini saqlab qo'yish
 @router.post("/save_progress")
 def save_progress(progress: SaveProgress, db: Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
+    # Agar token egasi o'zi bo'lmasa, xato qaytarish
     if current_user != progress.username:
         raise HTTPException(status_code=403, detail="Ruxsat etilmagan")
 
     crud.update_or_create_progress(db, progress)
     return {"msg": "progress saqlandi"}
 
+# O'yin boshlanganda o'yinchi ma'lumotlarini bazadan yuklab olish
 @router.get("/load_progress/{username}")
 def load_progress(username: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
+    # Ruxsatni tekshirish
     if current_user != username:
         raise HTTPException(status_code=403, detail="Ruxsat etilmagan")
 
     row = crud.get_progress_by_username(db, username)
+    # Agar yangi bo'lsa barcha ko'rsatkichlar 0 qaytadi
     if not row:
         return {
             "username": username,
