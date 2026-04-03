@@ -2,59 +2,40 @@ let cookies = 0;
 let totalCookies = 0;
 let cps = 0;
 
+// Upgrades Data
 const upgrades = {
     cursor: { baseCost: 15, cost: 15, count: 0, cpsAdd: 0.1 },
     grandma: { baseCost: 100, cost: 100, count: 0, cpsAdd: 1 },
     factory: { baseCost: 1000, cost: 1000, count: 0, cpsAdd: 8 }
 };
 
+// DOM Elements
 const cookiesEl = document.getElementById('cookies');
 const cpsEl = document.getElementById('cps');
 const bigCookie = document.getElementById('bigCookie');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
 
+// Initialize User
 async function initUser() {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        const tgId = tgUser.id;
-        const tgUsername = tgUser.username || `user_${tgId}`;
-
-        try {
-            window.Telegram.WebApp.expand();
-            const resp = await fetch('/tg_login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: tgId, username: tgUsername })
-            });
-            if (resp.ok) {
-                const data = await resp.json();
-                localStorage.setItem('primeUser', data.username);
-                if (data.token) localStorage.setItem('primeToken', data.token);
-            }
-        } catch (e) {
-            console.error("TG Auth error", e);
-        }
-    }
-
+    // Get user info from localStorage
     const user = localStorage.getItem('primeUser');
     if (!user) {
-        window.location.href = '/';
+        window.location.href = '/login';
         return;
     }
 
     usernameDisplay.textContent = user;
     avatarInitial.textContent = user.charAt(0).toUpperCase();
 
+    // Load saves from server
     await loadProgress(user);
 }
 
+// Load Progress from Backend
 async function loadProgress(username) {
     try {
-        const token = localStorage.getItem('primeToken') || '';
-        const response = await fetch(`/load_progress/${username}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetch(`/load_progress/${username}`);
         if (response.ok) {
             const data = await response.json();
 
@@ -72,11 +53,6 @@ async function loadProgress(username) {
 
             recalculateCPS();
             updateUI();
-        } else if (response.status === 401) {
-            console.warn("Unauthorized! Clearing session and redirecting to login...");
-            localStorage.removeItem('primeUser');
-            localStorage.removeItem('primeToken');
-            window.location.href = '/';
         } else {
             console.error("Failed to load progress from server.");
             updateUI();
@@ -87,6 +63,7 @@ async function loadProgress(username) {
     }
 }
 
+// Save Progress to Backend
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
     if (!user) return;
@@ -102,12 +79,10 @@ async function saveProgress() {
     };
 
     try {
-        const token = localStorage.getItem('primeToken') || '';
         await fetch('/save_progress', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(saveData)
         });
@@ -116,14 +91,17 @@ async function saveProgress() {
     }
 }
 
+// Format numbers securely
 function formatNumber(num) {
     return Math.floor(num).toLocaleString();
 }
 
+// Update UI
 function updateUI() {
     cookiesEl.textContent = formatNumber(cookies);
     cpsEl.textContent = cps.toFixed(1);
 
+    // Update Store Buttons
     Object.keys(upgrades).forEach(key => {
         const upgrade = upgrades[key];
         const card = document.getElementById(`upgrade${key.charAt(0).toUpperCase() + key.slice(1)}`);
@@ -139,40 +117,51 @@ function updateUI() {
     });
 }
 
+// Click the Big Cookie
 bigCookie.addEventListener('mousedown', (e) => {
+    // Add point
     cookies += 1;
     totalCookies += 1;
 
+    // Spawn +1 text
     spawnFloatingText(e.clientX, e.clientY);
 
+    // Trigger CSS animation manually so it works every click
     bigCookie.classList.remove('clicked');
-    void bigCookie.offsetWidth;
+    void bigCookie.offsetWidth; // Trigger reflow to restart animation
     bigCookie.classList.add('clicked');
 
+    // Update UI immediately for responsiveness
     updateUI();
 });
 
+// Floating Text Animation function
 function spawnFloatingText(x, y) {
     const floatEl = document.createElement('div');
     floatEl.textContent = '+1';
     floatEl.className = 'plus-one';
 
+    // Adjust starting position if triggered programmatically
     if (!x || !y) {
         const rect = bigCookie.getBoundingClientRect();
         x = rect.left + rect.width / 2;
         y = rect.top + rect.height / 2;
     }
 
+    // Center it somewhat randomly on the cursor
     floatEl.style.left = `${x - 20 + (Math.random() * 40 - 20)}px`;
     floatEl.style.top = `${y - 40}px`;
 
     document.body.appendChild(floatEl);
 
+    // Remove element after animation
     setTimeout(() => {
         floatEl.remove();
     }, 1000);
 }
 
+// Buy Upgrade Function
+// Expose functions explicitly so inline onclick calls them appropriately.
 window.buyUpgrade = function (key) {
     const upgrade = upgrades[key];
     const actualCost = Math.ceil(upgrade.cost);
@@ -180,13 +169,16 @@ window.buyUpgrade = function (key) {
     if (cookies >= actualCost) {
         cookies -= actualCost;
         upgrade.count += 1;
+        // Increase Cost by 15% each time
         upgrade.cost = upgrade.baseCost * Math.pow(1.15, upgrade.count);
 
+        // Recalculate CPS
         recalculateCPS();
         updateUI();
     }
 }
 
+// Recalculate CPS
 function recalculateCPS() {
     let newCps = 0;
     Object.keys(upgrades).forEach(key => {
@@ -195,25 +187,27 @@ function recalculateCPS() {
     cps = newCps;
 }
 
+// Game Loop for CPS (runs 10 times a second)
 setInterval(() => {
     if (cps > 0) {
+        // Add 1/10th of the CPS every 100ms
         cookies += cps / 10;
         totalCookies += cps / 10;
         updateUI();
     }
 }, 100);
 
-async function fetchUserRank() {
+async function fetchUserRank(){
     const user = localStorage.getItem("primeUser");
 
     if (!user) return;
 
-    try {
+    try{
         const response = await fetch(`/get_rank/${user}`);
-        console.log(response);
+         console.log(response);
         if (response.ok) {
             const data = await response.json();
-            if (data.rank > 0) {
+            if (data.rank > 0){
                 document.getElementById('userRankDisplay').style.display = 'block';
                 document.getElementById('userRank').textContent = `#${data.rank}`;
 
@@ -224,32 +218,18 @@ async function fetchUserRank() {
     }
 
     catch
-    (e) {
-        console.error("Connection error fetching rank:", e);
-    }
+        (e)
+        {
+            console.error("Connection error fetching rank:", e);
+        }
 
 }
 
+// Auto-Save Loop (runs every 10 seconds)
 setInterval(() => {
     saveProgress();
     fetchUserRank();
 }, 10000);
 
+// Initialize game
 initUser();
-fetchUserRank();
-
-window.logoutUser = async function () {
-    try {
-        await fetch('/logout', { method: 'POST' });
-    } catch (e) {
-        console.error("Logout failed:", e);
-    }
-    localStorage.removeItem('primeUser');
-    localStorage.removeItem('primeToken');
-
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-        window.Telegram.WebApp.close();
-    } else {
-        window.location.href = '/';
-    }
-}
