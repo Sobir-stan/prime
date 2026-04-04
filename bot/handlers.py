@@ -12,7 +12,7 @@ from app.db.models import Progress
 router = Router()
 
 # WebApp ga yo'naltiruvchi havola (Ngrok yoki sizning domeningiz)
-URL = "https://60c6-84-54-72-145.ngrok-free.app"
+URL = " https://ellie-ramulose-lajuana.ngrok-free.dev"
 
 # Asosiy klaviatura (menyular) ni yaratish
 def get_main_keyboard():

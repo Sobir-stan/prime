@@ -139,6 +139,15 @@ function updateUI() {
     });
 }
 
+function setSkin(skins) {
+    document.getElementById('bigOrenge').classList.add('active');
+    document.getElementById('bigCookie').classList.add('active');
+    document.getElementById('bigEgg').classList.add('active');
+    document.getElementById('bigCookie').classList.add('active');
+
+    document.getElementById('skins').classList.add('active');
+}
+
 bigCookie.addEventListener('mousedown', (e) => {
     cookies += 1;
     totalCookies += 1;
