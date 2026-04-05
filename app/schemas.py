@@ -14,10 +14,13 @@ class New_user(BaseModel):
     email: str
     password: str = Field(..., min_length=3)
 
+from typing import Optional
+
 # Tizimga kirish (Login) vaqtida keladigan shakl
 class Login_user(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=3)
+    telegram_id: Optional[int] = None
 
 # O'yin progressini saqlash so'rovining formati
 class SaveProgress(BaseModel):
@@ -31,7 +34,6 @@ class SaveProgress(BaseModel):
 
 class TelegramAuth(BaseModel):
     telegram_id: int
-    username: str
 
 # Promokod yaratish uchun keladigan ma'lumotlar
 class PromocodeCreate(BaseModel):

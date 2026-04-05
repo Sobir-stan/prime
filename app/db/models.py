@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    telegram_id = Column(Integer, unique=True, index=True, nullable=True)
 
 # O'yinchining to'plagan ballari va xaridlari jadvali
 class Progress(Base):
