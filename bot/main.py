@@ -22,6 +22,17 @@ async def main():
     
     # Log yozish sozlamasi
     logging.basicConfig(level=logging.INFO)
+    
+    from aiogram.types import MenuButtonWebApp, WebAppInfo
+    from bot.handlers import URL
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="🎮 O'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))
+        )
+        logging.info(f"Menu Button URL updated to {URL}/clicker")
+    except Exception as e:
+        logging.error(f"Failed to update menu button: {e}")
+
     # Oldingi eskirgan xabarlarni o'tkazib yuborish (Webhookni uchirish)
     await bot.delete_webhook(drop_pending_updates=True)
     # Botni ishga tushirish

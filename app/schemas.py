@@ -29,7 +29,22 @@ class SaveProgress(BaseModel):
     grandma_count : int
     factory_count : int
 
-# Telegram orqali avtomatik tizimga kirish auth ma'lumotlari
 class TelegramAuth(BaseModel):
     telegram_id: int
     username: str
+
+# Promokod yaratish uchun keladigan ma'lumotlar
+class PromocodeCreate(BaseModel):
+    code: str
+    reward: float
+    max_uses: int
+    is_active: bool
+
+# Promokodlarni ro'yxatda qaytarish modeli
+class PromocodeResponse(PromocodeCreate):
+    id: int
+    current_uses: int
+
+# Promokodni yoqish/o'chirish holati
+class PromocodeToggle(BaseModel):
+    is_active: bool
