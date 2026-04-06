@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, WebAppInfo
+from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from app.db.database import SessionLocal
@@ -12,7 +12,7 @@ from app.db.models import Progress
 router = Router()
 
 # WebApp ga yo'naltiruvchi havola (Ngrok yoki sizning domeningiz)
-URL = " https://ellie-ramulose-lajuana.ngrok-free.dev"
+URL = "https://ellie-ramulose-lajuana.ngrok-free.dev"
 
 # Asosiy klaviatura (menyular) ni yaratish
 def get_main_keyboard():
@@ -22,8 +22,9 @@ def get_main_keyboard():
     builder.button(text="🎮 Clicker O'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))
     builder.button(text="🏆 Reyting")
     builder.button(text="💼 Vazifalar")
+    builder.button(text="🛒 Cookie Shop")
     # Tugmalarni ustun qilib joylash
-    builder.adjust(1, 2)
+    builder.adjust(2, 2)
     return builder.as_markup(resize_keyboard=True)
 
 # /start komandasiga javob beruvchi handler
@@ -68,3 +69,24 @@ async def rating_handler(message: Message, state: FSMContext):
 async def tasks_handler(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Bu yerda vazifalar bo'ladi (masalan, kanallarga obuna bo'lish). Bu funksiya hali ishlab chiqilmoqda!")
+
+
+@router.message(F.text == "🛒 Cookie Shop")
+async def shop_handler(message: Message, state: FSMContext):
+    await state.clear()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🪙 Coin", callback_data="but_coin"),
+                InlineKeyboardButton(text="🥚 Egg", callback_data="buy_egg"),
+                InlineKeyboardButton(text="🍊 Orange", callback_data="buy_orange")
+            ]
+        ]
+    )
+    await message.answer("cookie shopdagi mahsulotlar ro'yxati va narxlari \n"
+                         "1. Coin - 200 ta pechenye \n"
+                         "2. Egg - 50 ta pechenye \n"
+                         "3. Orange - 100 ta pechenye",
+                         reply_markup=keyboard())
+
+

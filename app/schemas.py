@@ -1,4 +1,8 @@
 from pydantic import BaseModel, Field
+from sqlalchemy import Column, Integer, String, JSON
+
+from app.db.database import Base
+
 
 # Ushbu fayl Pydantic modellarini saqlaydi (sxemalar).
 # Bu modellar mijozdan (client) kelayotgan JSON ma'lumotlarni tekshirish va tozalash uchun ishlatiladi.
@@ -33,3 +37,12 @@ class SaveProgress(BaseModel):
 class TelegramAuth(BaseModel):
     telegram_id: int
     username: str
+
+class Progress(Base):
+    __tablename__ = "progress"
+
+    user_id = Column(Integer, primary_key=True)
+    cookies = Column(Integer, default=0)
+
+    active_skin = Column(String, default="cookie.png")
+    unlocked_skins = Column(JSON, default=["cookie.png"])

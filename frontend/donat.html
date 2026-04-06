@@ -3,11 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+<style>
+
+    :root {
+        --bg-color: #111827;
+        --text-color: #f3f4f6;
+        --text-muted: #9ca3af;
+        --panel-bg: rgba(255, 255, 255, 0.05);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --primary-color: #fbbf24;
+        --primary-hover: #f59e0b;
+    }
+
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: radial-gradient(circle at center, #1f2937, var(--bg-color));
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem;
+        box-sizing: border-box;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .container {
+        background: var(--panel-bg);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        width: 100%;
+        max-width: 800px;
+        position: relative;
+        z-index: 10;
+        box-sizing: border-box;
+    }
+
+    h1 {
+        font-size: 2rem;
+        text-align: center;
+        color: var(--primary-color);
+        letter-spacing: 2px;
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 1.8rem;
+        color: #d97706;
+        margin-top: 10px;
+    }
+
+    .tugma {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .tugma button {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .tugma button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: var(--primary-color);
+    }
+
+    .price {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    .tugma button:hover .price {
+    color: var(--primary-color);
+    }
+
+
+
+</style>
+
+
 </head>
 <body>
-    <button onclick="setSkin('bigCookie')">🍪 Cookie</button>
-    <button onclick="setSkin('egg')">🥚 Egg</button>
-    <button onclick="setSkin('orange')">🍊 Orange</button>
-    <button onclick="setSkin('coin')">🪙 Coin</button>
+
+<div class="container">
+    <h1>🛒 Cookie Shop</h1>
+    <h2>🎨 Choose Your Skin</h2>
+    <div class="tugma">
+    <button onclick="setSkin('bigCookie')">
+        🍪 Cookie
+        <span class="price">Free</span>
+    </button>
+
+    <button onclick="setSkin('egg')">
+        🥚 Egg
+        <span class="price">50 🍪</span>
+    </button>
+
+    <button onclick="setSkin('orange')">
+        🍊 Orange
+        <span class="price">100 🍪</span>
+    </button>
+
+    <button onclick="setSkin('coin')">
+        🪙 Coin
+        <span class="price">200 🍪</span>
+    </button>
+</div>
+</div>
 </body>
+    <script></script>
 </html>
