@@ -6,6 +6,11 @@ from app.db.database import get_db
 from app.db import crud
 from app.schemas import SaveProgress
 from app.core.security import get_current_user_from_cookie
+from pydantic import BaseModel
+from datetime import datetime
+
+class ApplyPromo(BaseModel):
+    code: str
 
 router = APIRouter()
 
@@ -47,3 +52,21 @@ def load_progress(username: str, db: Session = Depends(get_db), current_user: st
         "grandma_count" : row.grandma_count,
         "factory_count" : row.factory_count,
     }
+
+@router.post("/apply_promo")
+def apply_promo(promo: ApplyPromo, db: Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
+    code = promo.code.upper().strip()
+    promo_db = crud.get_promo_by_code(db, code)
+    if not promo_db:
+        return {"success": False, "message": "Bunday Promokod mavjud emas"}
+
+    if datetime.utcnow() > promo_db.expires_at:
+        return {"success": False, "message": "Promokod muddati utgan"}
+
+    if crud.is_promo_used_by_user(db, code, current_user):
+        return {"success": False, "message": "Bu promokod allaqachon ishlatilgan"}
+
+
+    crud.add_bonus_cookies(db, current_user, 10000)
+    crud.use_promo(db, code, current_user)
+    return {"success": True, "message": "10,000 pisheniya bonus sifatida qo'shildi!"}

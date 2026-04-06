@@ -253,3 +253,42 @@ window.logoutUser = async function () {
         window.location.href = '/';
     }
 }
+
+window.openPromoModal = function () {
+    document.getElementById('promoModal').style.display = 'flex';
+}
+
+window.closePromoModal = function () {
+    document.getElementById('promoModal').style.display = 'none';
+    document.getElementById('promoCode').value = '';
+}
+
+window.applyPromo = async function () {
+    const code = document.getElementById('promoCode').value.trim();
+    if (!code) {
+        alert('Iltimos, promo kod kiriting.');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('primeToken') || '';
+        const response = await fetch('/apply_promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ code: code })
+        });
+        const data = await response.json();
+        alert(data.message);
+        if (data.success) {
+            closePromoModal();
+            // Optionally reload progress or update UI
+            location.reload(); // to update cookies
+        }
+    } catch (e) {
+        console.error('Promo apply error:', e);
+        alert('Xatolik yuz berdi.');
+    }
+}

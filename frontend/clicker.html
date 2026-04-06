@@ -302,6 +302,9 @@
     <header>
         <div class="title">Cookie Clicker</div>
         <div style="display: flex; align-items: center; gap: 1rem;">
+            <button onclick="openPromoModal()"
+                style="color: #111827; background: #fbbf24; text-decoration: none; font-weight: bold; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; transition: transform 0.2s; border: none; cursor: pointer;">🎟
+                PROMOKOD</button>
             <a href="/rating"
                 style="color: #111827; background: #fbbf24; text-decoration: none; font-weight: bold; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; transition: transform 0.2s;">🏆
                 Reyting</a>
@@ -371,6 +374,17 @@
             </div>
         </section>
     </main>
+
+    <div id="promoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--panel-bg); padding: 2rem; border-radius: 0.75rem; border: 1px solid var(--panel-border); backdrop-filter: blur(10px); max-width: 400px; width: 90%;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 800;">Promo Kod Kiriting</h3>
+            <input type="text" id="promoCode" placeholder="Promo kod" style="width: 100%; padding: 0.75rem; border: 1px solid var(--panel-border); border-radius: 0.5rem; background: rgba(255, 255, 255, 0.05); color: var(--text-color); font-family: 'Outfit'; font-size: 1rem; margin-bottom: 1rem; box-sizing: border-box;">
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button onclick="applyPromo()" style="background: #fbbf24; color: #111827; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">Qabul qilish</button>
+                <button onclick="closePromoModal()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: bold; cursor: pointer;">Bekor qilish</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/static/scripts/clicker.js?v=3"></script>
 </body>

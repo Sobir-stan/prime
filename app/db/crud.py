@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from app.db.models import User, Progress
+from app.db.models import User, Progress, PromoCode, UsedPromo
 from app.schemas import New_user
 from app.core.security import pwd_context
+from datetime import datetime
 
 def get_user_by_username(db: Session, username: str):
     return db.query(User).filter(User.username == username).first()
@@ -75,3 +76,23 @@ def get_progress_rank(db: Session, username: str):
     if not db_progress:
         return 0
     return db.query(Progress).filter(Progress.totalCookies > db_progress.totalCookies).count() + 1
+
+def get_promo_by_code(db: Session, code: str):
+    return db.query(PromoCode).filter(PromoCode.code.ilike(code)).first()
+
+def is_promo_used_by_user(db: Session, code: str, username: str):
+    return db.query(UsedPromo).filter(UsedPromo.code.ilike(code), UsedPromo.username == username).first() is not None
+
+def use_promo(db: Session, code: str, username: str):
+    used = UsedPromo(code=code, username=username)
+    db.add(used)
+    db.commit()
+
+def add_bonus_cookies(db: Session, username: str, bonus: float):
+    progress = get_progress_by_username(db, username)
+    if progress:
+        progress.cookies += bonus
+        progress.totalCookies += bonus
+        db.commit()
+        return progress
+    return None
