@@ -1,3 +1,5 @@
+// Ushbu funksiya butun loyiha bo'ylab brauzer oynasida chiroyli xabarlarni (Notification) ko'rsatadi.
+// 'type' o'zgaruvchisi orqali xatoning turi qizil yoki yashil rangda ekanligini belgilash mumkin.
 function showNotification(message, type = 'error') {
     const notifEl = document.getElementById('global-notification');
 
@@ -12,7 +14,7 @@ function showNotification(message, type = 'error') {
     notifEl.style.display = 'block';
     notifEl.style.opacity = '1';
 
-
+    // Xabarni 5 soniyadan kn sekin o'chirib yo'qotish (animatsiya)
     setTimeout(() => {
         notifEl.style.opacity = '0';
         setTimeout(() => notifEl.style.display = 'none', 300);

@@ -14,6 +14,7 @@ const bigCookie = document.getElementById('bigCookie');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
 
+// Foydalanuvchini sahifaga kirishi bilan taniy boshlash va ma'lumotlarini yuklash
 async function initUser() {
     const urlParams = new URLSearchParams(window.location.search);
     const tgIdParam = urlParams.get('tg_id');
@@ -72,6 +73,7 @@ async function initUser() {
     await loadProgress(user);
 }
 
+// Serverdan progressni (nechta pullari borligi va pechenyelari soni) skachat qilish
 async function loadProgress(username) {
     try {
         const token = localStorage.getItem('primeToken') || '';
@@ -110,6 +112,7 @@ async function loadProgress(username) {
     }
 }
 
+// Har 10 soniyada progressni serverga (bazaga) doimiy saqlab turish funksiyasi
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
     if (!user) return;
@@ -162,6 +165,7 @@ function updateUI() {
     });
 }
 
+// Katta Cookie ustiga bosilganda chaqiriladigan asosiy o'yin mantiqi (Klyentskiy bosish)
 bigCookie.addEventListener('mousedown', (e) => {
     cookies += 1;
     totalCookies += 1;
@@ -261,6 +265,7 @@ setInterval(() => {
 initUser();
 fetchUserRank();
 
+// Tizimdan chiqish (Logout) hamda brauzer va Telegram xotirasini tozalash funksiyasi
 window.logoutUser = async function () {
     try {
         const token = localStorage.getItem('primeToken') || '';

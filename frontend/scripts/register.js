@@ -1,3 +1,4 @@
+// LocalStorage ichidagi eski tokenni tekshirish orqali avto-login bajariladi
 document.addEventListener("DOMContentLoaded", () => {
     const activeUser = localStorage.getItem('primeUser');
     const activeToken = localStorage.getItem('primeToken');
@@ -6,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// Ro'yxatdan o'tish tugmasi bosilganda ma'lumotlarni serverga jo'natish mantiqi
 async function registerUser() {
     const username = document.getElementById('username')?.value;
     const email = document.getElementById('email')?.value;
@@ -45,13 +47,10 @@ async function registerUser() {
         });
 
         if (response.ok) {
-            const result = await response.json();
-            console.log(`[Register Success] Server responded:`, result);
-            showNotification("Ro'yxatdan o'tish muvaffaqiyatli! (Registration successful)", 'success');
-
+            showNotification("Ro'yxatdan o'tish muvaffaqiyatli! Tizimga kira olasiz.", 'success');
 
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/'; // Login paneliga otish
             }, 1000);
         } else {
             console.error(`[Register Error] Server returned status ${response.status} ${response.statusText}`);

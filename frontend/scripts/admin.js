@@ -1,3 +1,4 @@
+// Barcha promokodlarni ma'lumotlar bazasidan o'qib kelish va HTML ro'yxatga chiqarish
 async function fetchPromos() {
     const res = await fetch('/admin/promocodes');
     if (res.ok) {
@@ -23,6 +24,7 @@ async function fetchPromos() {
     }
 }
 
+// Yangi promokod yaratish. Forma ma'lumotlari backendga jo'natiladi
 async function createPromo() {
     const code = document.getElementById('promoCode').value.trim();
     const reward = parseFloat(document.getElementById('promoReward').value);
@@ -47,6 +49,7 @@ async function createPromo() {
     }
 }
 
+// Promokodning holatini (faol yoki nofaol) o'zgartirish
 async function togglePromo(id, newState) {
     const res = await fetch(`/admin/promocodes/${id}/toggle`, {
         method: 'PUT',

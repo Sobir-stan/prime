@@ -17,7 +17,8 @@ class PromoState(StatesGroup):
     waiting_for_promo = State()
 
 # WebApp ga yo'naltiruvchi havola (Ngrok yoki sizning domeningiz)
-URL = "https://d8d4-213-230-86-180.ngrok-free.app"
+# URL = "https://stan.uz"
+URL = "https://0449-84-54-72-145.ngrok-free.app"
 
 
 def check_telegram_id(message: Message):
@@ -63,30 +64,28 @@ async def start_handler(message: Message, state: FSMContext):
         reply_markup=get_play_keyboard(message)
     )
 
-# Telegram orqali Promokod qabul qilish handleri
-@router.message(Command("promo"))
-async def apply_promo_handler(message: Message):
-    # Foydalanuvchi xabari quyidagicha keladi: "/promo SUPER100"
-    parts = message.text.split(" ", 1)
-    if len(parts) < 2:
-        await message.answer("Iltimos, promokodni shunday kiriting: \n<code>/promo KOD_NOMI</code>", parse_mode="HTML")
-        return
-    
-    code = parts[1].strip()
-    
+# Maxfiy modul: promokod bazada qidiriladigan umumiy yordamchi funksiya
+async def _process_promo(message: Message, code: str):
     db = SessionLocal()
     try:
-        # Baza bo'yicha userni topish (yoki yaratish)
         user = crud.get_user_by_telegram_id(db, message.from_user.id)
         if not user:
-            await message.answer(f"{message.from_user.id}\nIltimos, oldin '🎮 Clicker O'ynash' tugmasi orqali o'yinga kiring va hisobingizni tasdiqlang!")
+            await message.answer("Iltimos, oldin '🎮 Clicker O'ynash' tugmasini bosib, o'yinga kiring va hisobingizni ulang!")
             return
             
-        # Promokod funksiyasiga berish
         result = crud.use_promocode(db, code, user.username)
         await message.answer(result["msg"])
     finally:
         db.close()
+
+# Telegram orqali Promokod qabul qilish handleri (/promo KOD_NOMI)
+@router.message(Command("promo"))
+async def apply_promo_handler(message: Message):
+    parts = message.text.split(" ", 1)
+    if len(parts) < 2:
+        await message.answer("Iltimos, promokodni shunday kiriting: \n<code>/promo KOD_NOMI</code>", parse_mode="HTML")
+        return
+    await _process_promo(message, parts[1].strip())
 
 # "🏆 Reyting" tugmasi bosilganda ishlovchi handler
 @router.message(F.text == "🏆 Reyting")
@@ -118,20 +117,8 @@ async def ask_promo_handler(message: Message, state: FSMContext):
     await state.set_state(PromoState.waiting_for_promo)
     await message.answer("Iltimos, promokodni kiriting:")
 
-# Promokod kiritish holatida ishlovchi handler
+# Promokod kiritish holatida ishlovchi handler (tugma orqali yuborilsa)
 @router.message(PromoState.waiting_for_promo)
 async def state_promo_handler(message: Message, state: FSMContext):
     await state.clear()
-    code = message.text.strip()
-    
-    db = SessionLocal()
-    try:
-        user = crud.get_user_by_telegram_id(db, message.from_user.id)
-        if not user:
-            await message.answer(f"{message.from_user.id}\n{user}\nIltimos, o'yinga kiring")
-            return
-            
-        result = crud.use_promocode(db, code, user.username)
-        await message.answer(result["msg"])
-    finally:
-        db.close()
+    await _process_promo(message, message.text.strip())

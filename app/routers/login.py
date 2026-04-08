@@ -29,7 +29,6 @@ def login(user: Login_user, response: Response, db: Session = Depends(get_db)):
     if not pwd_context.verify(user.password, str(row.password)):
         raise HTTPException(status_code=401, detail="parol to'g'ri emas")
 
-    print(f"telegram id = {user.telegram_id}")
     if user.telegram_id:
         row.telegram_id = user.telegram_id
         db.commit()
