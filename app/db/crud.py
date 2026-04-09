@@ -1,8 +1,8 @@
 # Ushbu fayl ma'lumotlar bazasi bilan ishlash uchun asosiy funksiyalarni saqlaydi (CRUD).
 # Ma'lumot qo'shish, o'qish, yangilash kabi barcha jarayonlar shu yerda.
 from sqlalchemy.orm import Session
-from app.db.models import User, Progress, Promocode, UsedPromocode
-from app.schemas import New_user, PromocodeCreate
+from app.db.models import User, Progress
+from app.schemas import New_user
 from app.core.security import pwd_context
 
 # Foydalanuvchini username bo'yicha qidirib topish
@@ -97,62 +97,3 @@ def get_progress_rank(db: Session, username: str):
     # O'zidan ko'proq pechenye yig'ganlarni sanash
     return db.query(Progress).filter(Progress.totalCookies > db_progress.totalCookies).count() + 1
 
-# Yangi promokod yaratish
-def create_promocode(db: Session, promo: PromocodeCreate):
-    db_promo = Promocode(
-        code=promo.code,
-        reward=promo.reward,
-        max_uses=promo.max_uses,
-        is_active=promo.is_active
-    )
-    db.add(db_promo)
-    db.commit()
-    db.refresh(db_promo)
-    return db_promo
-
-# Barcha promokodlarni admin uchun qaytarish
-def get_all_promocodes(db: Session):
-    return db.query(Promocode).all()
-
-# Promokod faolligini o'zgartirish (yoqish/o'chirish)
-def toggle_promocode(db: Session, promo_id: int, is_active: bool):
-    promo = db.query(Promocode).filter(Promocode.id == promo_id).first()
-    if promo:
-        promo.is_active = is_active
-        db.commit()
-        db.refresh(promo)
-    return promo
-
-# O'yinchi tomonidan promokodni ishlatish mantig'i
-def use_promocode(db: Session, code: str, username: str):
-    promo = db.query(Promocode).filter(Promocode.code == code).first()
-    
-    if not promo:
-        return {"success": False, "msg": "Bunday promokod mavjud emas!"}
-    if not promo.is_active:
-        return {"success": False, "msg": "Ushbu promokod nofaol (o'chirilgan)."}
-    if promo.max_uses > 0 and promo.current_uses >= promo.max_uses:
-        return {"success": False, "msg": "Kechirasiz, ushbu promokodning ishlatilish limiti tugagan."}
-    
-    # Oldin ishlatganligini tekshirish
-    used = db.query(UsedPromocode).filter(UsedPromocode.username == username, UsedPromocode.promocode_id == promo.id).first()
-    if used:
-        return {"success": False, "msg": "Siz bu promokodni allaqachon ishlatgansiz!"}
-        
-    # Mukofotni o'yinchi hisobiga yozish
-    prog = get_progress_by_username(db, username)
-    if not prog:
-        prog = Progress(username=username, cookies=promo.reward, totalCookies=promo.reward, cps=0, cursor_count=0, grandma_count=0, factory_count=0)
-        db.add(prog)
-    else:
-        prog.cookies += promo.reward
-        prog.totalCookies += promo.reward
-    
-    # Promokodning umumiy ishlash sonini oshirish
-    promo.current_uses += 1
-    # Bu odam xuddi shu kodni qayta ishlata olmasligi uchun belgilash
-    new_used = UsedPromocode(username=username, promocode_id=promo.id)
-    db.add(new_used)
-    
-    db.commit()
-    return {"success": True, "msg": f"Tabriklaymiz! Sizga {int(promo.reward)} ta pechenye bonus sifatida qo'shildi!"}

@@ -30,18 +30,3 @@ class SaveProgress(BaseModel):
 class TelegramAuth(BaseModel):
     telegram_id: int
 
-# Promokod yaratish uchun keladigan ma'lumotlar
-class PromocodeCreate(BaseModel):
-    code: str
-    reward: float
-    max_uses: int
-    is_active: bool
-
-# Promokodlarni ro'yxatda qaytarish modeli
-class PromocodeResponse(PromocodeCreate):
-    id: int
-    current_uses: int
-
-# Promokodni yoqish/o'chirish holati
-class PromocodeToggle(BaseModel):
-    is_active: bool

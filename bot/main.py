@@ -3,10 +3,11 @@ import logging
 from aiogram import Bot, Dispatcher
 from bot.handlers import router
 import os
+from dotenv import load_dotenv
 from app.core.config import BASE_DIR
 
-# Ushbu fayl Telegram botni ishga tushiruvchi asosiy fayl hisoblanadi.
-# U Dispatcherni va botni sozlaydi va doimiy tarzda xabarlarni eshitib turish (polling) uchun ishlatiladi.
+# .env faylini o'qib, muhit o'zgaruvchilariga qo'shish
+load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 # Bot tokenini atrof-muhit (.env) dan olish
 BOT_TOKEN = os.getenv("BOT_TOKEN")
