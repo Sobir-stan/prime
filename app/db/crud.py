@@ -96,4 +96,3 @@ def get_progress_rank(db: Session, username: str):
         return 0
     # O'zidan ko'proq pechenye yig'ganlarni sanash
     return db.query(Progress).filter(Progress.totalCookies > db_progress.totalCookies).count() + 1
-

@@ -1,6 +1,6 @@
 # Ushbu fayl ma'lumotlar bazasining jadvallarini tuzilishini belgilaydi.
 # SQLAlchemy yordamida User va Progress obyektlari yaratilgan.
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from app.db.database import Base
 
 # Foydalanuvchilar jadvali
@@ -11,7 +11,6 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    telegram_id = Column(Integer, unique=True, index=True, nullable=True)
 
 # O'yinchining to'plagan ballari va xaridlari jadvali
 class Progress(Base):
@@ -26,4 +25,3 @@ class Progress(Base):
     cursor_count = Column(Integer, nullable=False, default=0)
     grandma_count = Column(Integer, nullable=False, default=0)
     factory_count = Column(Integer, nullable=False, default=0)
-
