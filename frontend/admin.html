@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli - Clicker Evolution</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f6f8;
+            color: #333;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border-top: 6px solid #3498db;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 15px;
+        }
+
+        .card p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .card-content {
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafbfc;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px dashed #ddd;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⚙️ Boshqaruv (Admin) Paneli ⚙️</h1>
+
+    <div class="grid-container">
+        <!-- 1. Promokodlar Tizimi -->
+        <div class="card" style="border-top-color: #e74c3c;">
+            <h2 style="color: #e74c3c;">🎁 1. Promokodlar Tizimi</h2>
+            <p>Yangi sirlangan kodlar yaratish, ularning miqdorini belgilash va ishlatilgan kodlarni o'chirish bo'limi.
+            </p>
+            <div class="card-content">
+                Tez orada formalar qo'shiladi...
+            </div>
+        </div>
+
+        <!-- 2. Skinlar Do'koni -->
+        <div class="card" style="border-top-color: #f1c40f;">
+            <h2 style="color: #f39c12;">🎨 2. Skinlar Do'koni</h2>
+            <p>O'yin uchun yangi rasm (skin)lar qo'shish, ro'yxatni o'zgartirish yoki barcha ochiq skinlarni boshqarish
+                qismi.</p>
+            <div class="card-content">
+                Tez orada formalar qo'shiladi...
+            </div>
+        </div>
+
+        <!-- 3. Yuguruvchi Yangiliklar -->
+        <div class="card" style="border-top-color: #2ecc71;">
+            <h2 style="color: #27ae60;">📣 3. Yuguruvchi Yangiliklar</h2>
+            <p>Barcha o'yinchilarning ekranida, yuqori qismda chiqadigan muhim e'lon va yangiliklarni yozish bloki.</p>
+            <div class="card-content">
+                Tez orada formalar qo'shiladi...
+            </div>
+        </div>
+
+        <!-- 4. Pechenye O'tkazmalari -->
+        <div class="card" style="border-top-color: #9b59b6;">
+            <h2 style="color: #8e44ad;">🤝 4. Pechenye O'tkazmalari</h2>
+            <p>Foydalanuvchilar o'rtasidagi sovg'a yoki pul o'tkazmalari tarixini tahlil qilish va nazorat qilish
+                jadvali.</p>
+            <div class="card-content">
+                Tez orada formalar qo'shiladi...
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT FOR AJAX (FETCHING APIS) -->
+</body>
+
+</html>
