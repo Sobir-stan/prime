@@ -14,18 +14,38 @@ const bigCookie = document.getElementById('bigCookie');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
 
+// Foydalanuvchini sahifaga kirishi bilan taniy boshlash va ma'lumotlarini yuklash
 async function initUser() {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        const tgId = tgUser.id;
-        const tgUsername = tgUser.username || `user_${tgId}`;
+    const urlParams = new URLSearchParams(window.location.search);
+    const tgIdParam = urlParams.get('tg_id');
+    let tgId = null;
 
+    if (tgIdParam) {
+        tgId = parseInt(tgIdParam);
+    } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        tgId = window.Telegram.WebApp.initDataUnsafe.user.id;
+    }
+
+    const activeUser = localStorage.getItem('primeUser');
+    const activeToken = localStorage.getItem('primeToken');
+
+    if (tgId && activeUser && activeToken) {
+        // Silently bind the Telegram ID to the existing session
+        fetch('/link_telegram', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${activeToken}`
+            },
+            body: JSON.stringify({ telegram_id: tgId })
+        }).catch(e => console.error("Link error", e));
+    } else if (tgId) {
         try {
             window.Telegram.WebApp.expand();
             const resp = await fetch('/tg_login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: tgId, username: tgUsername })
+                body: JSON.stringify({ telegram_id: tgId })
             });
             if (resp.ok) {
                 const data = await resp.json();
@@ -39,7 +59,11 @@ async function initUser() {
 
     const user = localStorage.getItem('primeUser');
     if (!user) {
-        window.location.href = '/';
+        let finalHash = window.location.hash;
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+            finalHash = '#tgWebAppData=' + window.Telegram.WebApp.initData;
+        }
+        window.location.href = '/' + window.location.search + finalHash;
         return;
     }
 
@@ -49,6 +73,7 @@ async function initUser() {
     await loadProgress(user);
 }
 
+// Serverdan progressni (nechta pullari borligi va pechenyelari soni) skachat qilish
 async function loadProgress(username) {
     try {
         const token = localStorage.getItem('primeToken') || '';
@@ -87,6 +112,7 @@ async function loadProgress(username) {
     }
 }
 
+// Har 10 soniyada progressni serverga (bazaga) doimiy saqlab turish funksiyasi
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
     if (!user) return;
@@ -139,6 +165,7 @@ function updateUI() {
     });
 }
 
+// Katta Cookie ustiga bosilganda chaqiriladigan asosiy o'yin mantiqi (Klyentskiy bosish)
 bigCookie.addEventListener('mousedown', (e) => {
     cookies += 1;
     totalCookies += 1;
@@ -195,14 +222,6 @@ function recalculateCPS() {
     cps = newCps;
 }
 
-setInterval(() => {
-    if (cps > 0) {
-        cookies += cps / 10;
-        totalCookies += cps / 10;
-        updateUI();
-    }
-}, 100);
-
 async function fetchUserRank() {
     const user = localStorage.getItem("primeUser");
 
@@ -231,6 +250,14 @@ async function fetchUserRank() {
 }
 
 setInterval(() => {
+    if (cps > 0) {
+        cookies += cps / 10;
+        totalCookies += cps / 10;
+        updateUI();
+    }
+}, 100);
+
+setInterval(() => {
     saveProgress();
     fetchUserRank();
 }, 10000);
@@ -238,9 +265,14 @@ setInterval(() => {
 initUser();
 fetchUserRank();
 
+// Tizimdan chiqish (Logout) hamda brauzer va Telegram xotirasini tozalash funksiyasi
 window.logoutUser = async function () {
     try {
-        await fetch('/logout', { method: 'POST' });
+        const token = localStorage.getItem('primeToken') || '';
+        await fetch('/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
     } catch (e) {
         console.error("Logout failed:", e);
     }
