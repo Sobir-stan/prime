@@ -99,9 +99,19 @@
         <div class="card" style="border-top-color: #2ecc71;">
             <h2 style="color: #27ae60;">📣 3. Yuguruvchi Yangiliklar</h2>
             <p>Barcha o'yinchilarning ekranida, yuqori qismda chiqadigan muhim e'lon va yangiliklarni yozish bloki.</p>
-            <div class="card-content">
-                Tez orada formalar qo'shiladi...
-            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+    <input
+        type="text"
+        id="newsInput"
+        placeholder="Yangi xabar kiriting..."
+        style="flex: 1; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #ccc; font-family: 'Outfit';"
+    >
+
+    <button onclick="addNews()"
+        style="background: #22c55e; color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold;">
+        ➕ Add
+    </button>
+</div>
         </div>
 
         <!-- 4. Pechenye O'tkazmalari -->
@@ -117,5 +127,23 @@
 
     <!-- SCRIPT FOR AJAX (FETCHING APIS) -->
 </body>
+<!-- your input + button is above -->
 
+<script>
+function addNews() {
+    const input = document.getElementById("newsInput");
+    const text = input.value.trim();
+
+    if (!text) return alert("Xabar kiriting!");
+
+    let news = JSON.parse(localStorage.getItem("newsMessages")) || [];
+    news.push(text);
+    localStorage.setItem("newsMessages", JSON.stringify(news));
+
+    input.value = "";
+    alert("Qo'shildi ✅");
+}
+</script>
+
+</body>
 </html>

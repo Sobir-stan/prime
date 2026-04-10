@@ -50,6 +50,36 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /*!* ✅ MODERN NEWS TICKER *! .news-ticker { width: 100%; overflow: hidden; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid var(--panel-border); white-space: nowrap; } .news-track { display: inline-block; padding-left: 100%; animation: scrollText 15s linear infinite; } .news-track span { margin-right: 4rem; font-weight: 600; color: #fbbf24; } .news-ticker:hover .news-track { animation-play-state: paused; } @keyframes scrollText { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }*/
+        .news-ticker {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--panel-border);
+}
+
+.news-track {
+    display: inline-block;
+    white-space: nowrap;
+    animation: scrollText 10s linear infinite;
+}
+
+.news-track span {
+    padding-right: 4rem;
+    font-weight: 600;
+    color: #fbbf24;
+    white-space: nowrap;
+}
+
+/* KEY FIX */
+@keyframes scrollText {
+    0% {
+        transform: translateX(100vw); /* start fully off screen (right) */
+    }
+    100% {
+        transform: translateX(-100%); /* move fully past left */
+    }
+}
         .user-info {
             font-size: 1.1rem;
             display: flex;
@@ -318,12 +348,14 @@
         </div>
     </header>
 
+
+        <!-- ✅ ADDED HERE --> <div class="news-ticker"> <div class="news-track">   </div> </div>
     <main>
-        <section class="click-area">
             <div class="stats">
                 <p class="cookie-count"><span id="cookies">0</span></p>
                 <p class="cps">cookies per second: <span id="cps">0</span></p>
             </div>
+        <section class="click-area">
 
             <div class="cookie-wrapper">
                 <div class="cookie" id="bigCookie">

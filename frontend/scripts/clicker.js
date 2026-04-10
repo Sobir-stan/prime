@@ -285,3 +285,88 @@ window.logoutUser = async function () {
         window.location.href = '/';
     }
 }
+
+function loadNews() {
+    const track = document.querySelector(".news-track");
+    let news = JSON.parse(localStorage.getItem("newsMessages")) || [];
+
+    if (news.length === 0) {
+        news = ["🔥 Welcome to Cookie Clicker!"];
+    }
+
+    track.innerHTML = "";
+
+    news.forEach(msg => {
+        const span = document.createElement("span");
+        span.textContent = msg;
+        track.appendChild(span);
+    });
+}
+
+function addNewsMessage(msg) {
+    if (!msg) return;
+    msg = msg.toString().trim();
+    if (msg.length === 0) return;
+
+    // Save locally so the ticker updates immediately
+    const news = JSON.parse(localStorage.getItem("newsMessages")) || [];
+    news.push(msg);
+    localStorage.setItem("newsMessages", JSON.stringify(news));
+
+    // Try to send to server (if your Java backend exposes /add_news). Failure is non-fatal.
+    try {
+        const token = localStorage.getItem('primeToken') || '';
+        fetch('/add_news', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ message: msg })
+        }).catch(e => console.warn('Failed to POST news to server:', e));
+    } catch (e) {
+        console.warn('Error while posting news:', e);
+    }
+
+    loadNews();
+}
+
+// Wire up controls (works whether script is loaded at end or earlier)
+function wireNewsControls() {
+    const input = document.getElementById('newsInput');
+    const btn = document.getElementById('newsAddBtn');
+    if (!input || !btn) return;
+
+    btn.addEventListener('click', () => {
+        addNewsMessage(input.value);
+        input.value = '';
+        input.focus();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            addNewsMessage(input.value);
+            input.value = '';
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { wireNewsControls(); loadNews(); });
+} else {
+    wireNewsControls();
+    loadNews();
+}
+
+// Listen for storage events so messages added from `admin.html` (or another tab)
+// immediately appear in the ticker without reloading the clicker page.
+window.addEventListener('storage', (e) => {
+    if (!e) return;
+    if (e.key === 'newsMessages') {
+        try {
+            loadNews();
+        } catch (err) {
+            console.warn('Error updating news from storage event:', err);
+        }
+    }
+});
