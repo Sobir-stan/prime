@@ -59,9 +59,10 @@
 }
 
 .news-track {
-    display: inline-block;
-    white-space: nowrap;
-    animation: scrollText 10s linear infinite;
+    display: block;
+    position: relative;
+    height: 48px;
+    overflow: hidden;
 }
 
 .news-track span {
@@ -79,6 +80,26 @@
     100% {
         transform: translateX(-100%); /* move fully past left */
     }
+}
+
+/* Single-message sequential ticker */
+@keyframes slideNews {
+    0% { transform: translateX(100%) translateY(-50%); }
+    100% { transform: translateX(-100%) translateY(-50%); }
+}
+
+.news-track .single-news {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateX(100%) translateY(-50%);
+    white-space: nowrap;
+    font-weight: 600;
+    color: #fbbf24;
+    will-change: transform;
+    animation-name: slideNews;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
 }
         .user-info {
             font-size: 1.1rem;
@@ -114,10 +135,15 @@
             position: relative;
         }
 
-        /* Stats Display */
+        /* Stats Display (positioned above the cookie) */
         .stats {
+            position: absolute;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
-            margin-bottom: 3rem;
+            width: 100%;
+            z-index: 20;
         }
 
         .cookie-count {
@@ -349,13 +375,17 @@
     </header>
 
 
-        <!-- ✅ ADDED HERE --> <div class="news-ticker"> <div class="news-track">   </div> </div>
+        <!-- ✅ ADDED HERE -->
+        <div class="news-ticker">
+            <div class="news-track"></div>
+        </div>
     <main>
+        <section class="click-area">
+
             <div class="stats">
                 <p class="cookie-count"><span id="cookies">0</span></p>
                 <p class="cps">cookies per second: <span id="cps">0</span></p>
             </div>
-        <section class="click-area">
 
             <div class="cookie-wrapper">
                 <div class="cookie" id="bigCookie">

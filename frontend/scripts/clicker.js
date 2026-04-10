@@ -286,21 +286,53 @@ window.logoutUser = async function () {
     }
 }
 
+let _newsQueue = [];
+let _tickerIndex = 0;
+let _tickerPlaying = false;
+
 function loadNews() {
     const track = document.querySelector(".news-track");
-    let news = JSON.parse(localStorage.getItem("newsMessages")) || [];
+    _newsQueue = JSON.parse(localStorage.getItem("newsMessages")) || [];
 
-    if (news.length === 0) {
-        news = ["🔥 Welcome to Cookie Clicker!"];
+    if (!_newsQueue || _newsQueue.length === 0) {
+        _newsQueue = ["🔥 Welcome to Cookie Clicker!"];
     }
 
-    track.innerHTML = "";
+    // If not currently playing, start the sequential ticker
+    if (!_tickerPlaying) {
+        _tickerIndex = 0;
+        playNextNews();
+    }
+}
 
-    news.forEach(msg => {
-        const span = document.createElement("span");
-        span.textContent = msg;
-        track.appendChild(span);
-    });
+function playNextNews() {
+    const track = document.querySelector(".news-track");
+    if (!_newsQueue || _newsQueue.length === 0) {
+        track.innerHTML = '';
+        _tickerPlaying = false;
+        return;
+    }
+
+    _tickerPlaying = true;
+    const msg = _newsQueue[_tickerIndex % _newsQueue.length];
+
+    track.innerHTML = '';
+    const span = document.createElement('span');
+    span.className = 'single-news';
+    span.textContent = msg;
+
+    // Duration proportional to length (min 5s)
+    const duration = Math.max(5, Math.min(20, msg.length * 0.15));
+    span.style.animationDuration = duration + 's';
+
+    span.addEventListener('animationend', () => {
+        // advance to next message after current fully leaves
+        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
+        // small timeout to avoid instant reflow overlap
+        setTimeout(playNextNews, 300);
+    }, { once: true });
+
+    track.appendChild(span);
 }
 
 function addNewsMessage(msg) {
@@ -357,16 +389,3 @@ if (document.readyState === 'loading') {
     wireNewsControls();
     loadNews();
 }
-
-// Listen for storage events so messages added from `admin.html` (or another tab)
-// immediately appear in the ticker without reloading the clicker page.
-window.addEventListener('storage', (e) => {
-    if (!e) return;
-    if (e.key === 'newsMessages') {
-        try {
-            loadNews();
-        } catch (err) {
-            console.warn('Error updating news from storage event:', err);
-        }
-    }
-});
