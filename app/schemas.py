@@ -28,3 +28,24 @@ class SaveProgress(BaseModel):
 class TelegramAuth(BaseModel):
     telegram_id: int
     username: str
+
+class CreatePromoCode(BaseModel):
+    code: str
+    cookies: float
+    usage_limit: int
+
+class UpdatePromoCode(BaseModel):
+    code: str
+    cookies: float
+    usage_limit: int
+
+class PromoCodeResponse(BaseModel):
+    id: int
+    code: str
+    cookies: float
+    usage_limit: int
+    active: bool
+    used_count: int
+    
+    class Config:
+        from_attributes = True

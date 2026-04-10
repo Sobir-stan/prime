@@ -5,7 +5,7 @@ from app.core.config import BASE_DIR
 from app.db.database import get_db
 from app.db import crud
 from app.schemas import SaveProgress
-from app.core.security import get_current_user_from_cookie
+from app.core.security import get_current_user_from_cookie, get_current_admin
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -60,13 +60,22 @@ def apply_promo(promo: ApplyPromo, db: Session = Depends(get_db), current_user: 
     if not promo_db:
         return {"success": False, "message": "Bunday Promokod mavjud emas"}
 
-    if datetime.utcnow() > promo_db.expires_at:
-        return {"success": False, "message": "Promokod muddati utgan"}
+    if not promo_db.active:
+        return {"success": False, "message": "Bu promokod faolsizlantirilgan"}
+
+
+    used_count = crud.get_promo_usage_count(db, code)
+    if used_count >= promo_db.usage_limit:
+        return {"success": False, "message": "Bu promokod ishlatish limiti tugagan"}
 
     if crud.is_promo_used_by_user(db, code, current_user):
         return {"success": False, "message": "Bu promokod allaqachon ishlatilgan"}
 
-
-    crud.add_bonus_cookies(db, current_user, 10000)
+    crud.add_bonus_cookies(db, current_user, promo_db.cookies)
     crud.use_promo(db, code, current_user)
-    return {"success": True, "message": "10,000 pisheniya bonus sifatida qo'shildi!"}
+    return {"success": True, "message": f"{promo_db.cookies} pecheniye bonus sifatida qo'shildi!"}
+
+@router.get("/admin", response_class=HTMLResponse)
+def admin_page(current_admin: str = Depends(get_current_admin)):
+    with open(BASE_DIR/"frontend/admin.html", "r", encoding="utf-8") as f:
+        return f.read()

@@ -37,3 +37,13 @@ def get_current_user_from_cookie(request: Request):
         raise HTTPException(status_code=401, detail="Token muddati tugagan. (Expired)")
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Xato token. (Invalid token)")
+
+def get_current_admin(request: Request):
+    username = get_current_user_from_cookie(request)
+    from app.db.database import get_db
+    from app.db import crud
+    db = next(get_db())
+    user = crud.get_user_by_username(db, username)
+    if not user or not user.is_admin:
+        raise HTTPException(status_code=403, detail="Siz admin emassiz")
+    return username

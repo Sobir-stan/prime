@@ -96,3 +96,47 @@ def add_bonus_cookies(db: Session, username: str, bonus: float):
         db.commit()
         return progress
     return None
+
+def get_promo_usage_count(db: Session, code: str):
+    return db.query(UsedPromo).filter(UsedPromo.code.ilike(code)).count()
+
+def create_promo_code(db: Session, code: str, cookies: float, usage_limit: int, expires_at=None):
+    promo = PromoCode(code=code, cookies=cookies, usage_limit=usage_limit, active=True)
+    db.add(promo)
+    db.commit()
+    db.refresh(promo)
+    return promo
+
+def get_all_promo_codes(db: Session):
+    promos = db.query(PromoCode).all()
+    for promo in promos:
+        promo.used_count = get_promo_usage_count(db, promo.code)
+    return promos
+
+def update_promo_code(db: Session, code: str, new_expires_at, new_cookies: float, new_usage_limit: int):
+    promo = get_promo_by_code(db, code)
+    if promo:
+        promo.expires_at = new_expires_at
+        promo.cookies = new_cookies
+        promo.usage_limit = new_usage_limit
+        db.commit()
+        db.refresh(promo)
+        return promo
+    return None
+
+def toggle_promo_active(db: Session, code: str):
+    promo = get_promo_by_code(db, code)
+    if promo:
+        promo.active = not promo.active
+        db.commit()
+        db.refresh(promo)
+        return promo
+    return None
+
+def delete_promo_code(db: Session, code: str):
+    promo = get_promo_by_code(db, code)
+    if promo:
+        db.delete(promo)
+        db.commit()
+        return True
+    return False

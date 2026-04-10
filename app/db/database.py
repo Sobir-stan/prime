@@ -11,7 +11,7 @@ engine = create_engine( SQLALCHEMY_DATABASE_URL, connect_args={"check_same_threa
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    from app.db.models import User, Progress, PromoCode
+    from app.db.models import User, Progress, PromoCode, UsedPromo
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -19,20 +19,15 @@ def init_db():
         admin_user = db.query(User).filter(User.username == "admin").first()
         if not admin_user:
             hashed_password = pwd_context.hash("123")
-            admin_user = User(username="admin", email="admin@admin.com", password=hashed_password)
+            admin_user = User(username="admin", email="admin@admin.com", password=hashed_password, is_admin=True)
             db.add(admin_user)
             db.commit()
-
-
-        promo_codes = ["muminov313", "_muminov.313", "ali313", "muminov", "313"]
-        for code in promo_codes:
-            if not db.query(PromoCode).filter(PromoCode.code == code).first():
-                expires = datetime.utcnow() + timedelta(days=7)
-                promo = PromoCode(code=code, expires_at=expires)
-                db.add(promo)
-        db.commit()
+        else:
+            if not admin_user.is_admin:
+                admin_user.is_admin = True
+                db.commit()
     except Exception as e:
-        print(f"Error initializing default admin or promos: {e}")
+        print(f"Error initializing default admin: {e}")
     finally:
         db.close()
 
