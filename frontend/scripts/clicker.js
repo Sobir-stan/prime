@@ -291,16 +291,34 @@ let _tickerIndex = 0;
 let _tickerPlaying = false;
 
 function loadNews() {
-    _newsQueue = JSON.parse(localStorage.getItem("newsMessages")) || [];
-
-    if (!_newsQueue || _newsQueue.length === 0) {
-        _newsQueue = ["🔥 Welcome to Cookie Clicker!"];
+    // Load raw value and handle migration from string-array to objects
+    let raw = localStorage.getItem("newsMessages");
+    if (!raw) {
+        _newsQueue = [];
+    } else {
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed) || parsed.length === 0) {
+                _newsQueue = [];
+            } else if (typeof parsed[0] === 'string') {
+                // migrate to objects
+                const migrated = parsed.map(s => ({ id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: s, active: true, createdAt: new Date().toISOString() }));
+                localStorage.setItem('newsMessages', JSON.stringify(migrated));
+                _newsQueue = migrated.filter(m => m.active);
+            } else {
+                // already objects
+                _newsQueue = parsed.map(item => ({ id: item.id || ('m_' + Date.now() + '_' + Math.floor(Math.random()*1000)), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() })).filter(m => m.active && m.text);
+            }
+        } catch (e) {
+            console.error('Failed to parse newsMessages in clicker:', e);
+            _newsQueue = [];
+        }
     }
 
-    // If not currently playing, start the sequential ticker
+    // If not currently playing, start the sequential ticker only when there are messages
     if (!_tickerPlaying) {
         _tickerIndex = 0;
-        playNextNews();
+        if (_newsQueue.length > 0) playNextNews();
     }
 }
 
@@ -313,7 +331,14 @@ function playNextNews() {
     }
 
     _tickerPlaying = true;
-    const msg = _newsQueue[_tickerIndex % _newsQueue.length];
+    const item = _newsQueue[_tickerIndex % _newsQueue.length];
+    const msg = (typeof item === 'string') ? item : (item.text || '');
+    if (!msg) {
+        // skip empty messages
+        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
+        setTimeout(playNextNews, 100);
+        return;
+    }
 
     track.innerHTML = '';
     const span = document.createElement('span');
@@ -330,7 +355,7 @@ function playNextNews() {
     // Pixels per second speed (adjustable). Duration computed from distance.
     const pxPerSec = 120; // higher = faster
     const distance = containerWidth + spanWidth;
-    const durationMs = Math.max(4000, Math.min(20000, (distance / pxPerSec) * 1000));
+    const durationMs = Math.max(3000, Math.min(30000, (distance / pxPerSec) * 1000));
 
     // Place the element just outside the right edge, vertically centered.
     span.style.transform = `translateX(${containerWidth}px) translateY(-50%)`;
@@ -347,7 +372,16 @@ function playNextNews() {
     anim.onfinish = () => {
         _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
         span.remove();
-        setTimeout(playNextNews, 300);
+        // small delay between messages
+        setTimeout(() => {
+            // If messages were removed (via storage) and now queue empty, stop
+            if (!_newsQueue || _newsQueue.length === 0) {
+                track.innerHTML = '';
+                _tickerPlaying = false;
+                return;
+            }
+            playNextNews();
+        }, 300);
     };
 }
 
@@ -356,10 +390,11 @@ function addNewsMessage(msg) {
     msg = msg.toString().trim();
     if (msg.length === 0) return;
 
-    // Save locally so the ticker updates immediately
-    const news = JSON.parse(localStorage.getItem("newsMessages")) || [];
-    news.push(msg);
-    localStorage.setItem("newsMessages", JSON.stringify(news));
+    // Save locally so the ticker updates immediately (store as objects)
+    const raw = JSON.parse(localStorage.getItem("newsMessages")) || [];
+    const toPush = { id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: msg, active: true, createdAt: new Date().toISOString() };
+    raw.push(toPush);
+    localStorage.setItem("newsMessages", JSON.stringify(raw));
 
     // Try to send to server (if your Java backend exposes /add_news). Failure is non-fatal.
     try {
@@ -378,6 +413,13 @@ function addNewsMessage(msg) {
 
     loadNews();
 }
+
+// React to storage changes from admin page
+window.addEventListener('storage', function(e) {
+    if (e.key === 'newsMessages') {
+        loadNews();
+    }
+});
 
 // Wire up controls (works whether script is loaded at end or earlier)
 function wireNewsControls() {

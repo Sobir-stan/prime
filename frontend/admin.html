@@ -148,13 +148,13 @@
             if (!Array.isArray(parsed)) return [];
             // check first item type
             if (parsed.length && typeof parsed[0] === 'string') {
-                // migrate
-                const migrated = parsed.map(s => ({ id: genId(), text: s, active: true }));
+                // migrate string-array -> objects with createdAt and active
+                const migrated = parsed.map(s => ({ id: genId(), text: s, active: true, createdAt: new Date().toISOString() }));
                 localStorage.setItem('newsMessages', JSON.stringify(migrated));
                 return migrated;
             }
-            // already objects
-            return parsed.map(item => ({ id: item.id || genId(), text: item.text || '', active: item.active !== false }));
+            // already objects - normalize fields and preserve createdAt if present
+            return parsed.map(item => ({ id: item.id || genId(), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() }));
         } catch (e) {
             console.error('Failed to parse newsMessages', e);
             return [];
@@ -193,9 +193,15 @@
             txt.style.marginRight = '0.5rem';
             txt.textContent = item.text;
 
-            const btnGroup = document.createElement('div');
-            btnGroup.style.display = 'flex';
-            btnGroup.style.gap = '0.4rem';
+            const right = document.createElement('div');
+            right.style.display = 'flex';
+            right.style.flexDirection = 'column';
+            right.style.alignItems = 'flex-end';
+            right.style.gap = '0.25rem';
+
+            const btnRow = document.createElement('div');
+            btnRow.style.display = 'flex';
+            btnRow.style.gap = '0.35rem';
 
             const toggleBtn = document.createElement('button');
             toggleBtn.textContent = item.active ? 'Deactivate' : 'Activate';
@@ -211,15 +217,24 @@
             delBtn.textContent = 'Delete';
             delBtn.style.padding = '0.35rem 0.6rem';
             delBtn.style.borderRadius = '6px';
-            delBtn.style.border = '1px solid #ddd';
+            delBtn.style.border = '1px solid rgba(0,0,0,0.08)';
             delBtn.style.cursor = 'pointer';
+            delBtn.style.background = '#f3f4f6';
             delBtn.onclick = function() { deleteMessage(item.id); };
 
-            btnGroup.appendChild(toggleBtn);
-            btnGroup.appendChild(delBtn);
+            // timestamp display
+            const ts = document.createElement('div');
+            ts.style.fontSize = '0.8rem';
+            ts.style.color = '#666';
+            ts.textContent = (new Date(item.createdAt)).toLocaleString();
+
+            btnRow.appendChild(toggleBtn);
+            btnRow.appendChild(delBtn);
+            right.appendChild(btnRow);
+            right.appendChild(ts);
 
             row.appendChild(txt);
-            row.appendChild(btnGroup);
+            row.appendChild(right);
 
             container.appendChild(row);
         });
@@ -231,7 +246,7 @@
         if (!text) return alert('Xabar kiriting!');
 
         const news = loadMessages();
-        news.push({ id: genId(), text, active: true });
+        news.push({ id: genId(), text, active: true, createdAt: new Date().toISOString() });
         saveMessages(news);
         input.value = '';
         renderMessages();
