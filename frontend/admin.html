@@ -99,19 +99,26 @@
         <div class="card" style="border-top-color: #2ecc71;">
             <h2 style="color: #27ae60;">📣 3. Yuguruvchi Yangiliklar</h2>
             <p>Barcha o'yinchilarning ekranida, yuqori qismda chiqadigan muhim e'lon va yangiliklarni yozish bloki.</p>
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-    <input
-        type="text"
-        id="newsInput"
-        placeholder="Yangi xabar kiriting..."
-        style="flex: 1; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #ccc; font-family: 'Outfit';"
-    >
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-direction: column;">
+            <div style="display:flex; gap:0.5rem;">
+            <input
+                type="text"
+                id="newsInput"
+                placeholder="Yangi xabar kiriting..."
+                style="flex: 1; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #ccc; font-family: 'Outfit';"
+            >
 
-    <button onclick="addNews()"
-        style="background: #22c55e; color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold;">
-        ➕ Add
-    </button>
-</div>
+            <button id="addBtn" onclick="addNews()"
+                style="background: #22c55e; color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold;">
+                ➕ Add
+            </button>
+            </div>
+
+            <!-- Messages list appears here -->
+            <div id="messagesList" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <!-- dynamically populated -->
+            </div>
+        </div>
         </div>
 
         <!-- 4. Pechenye O'tkazmalari -->
@@ -126,24 +133,136 @@
     </div>
 
     <!-- SCRIPT FOR AJAX (FETCHING APIS) -->
-</body>
-<!-- your input + button is above -->
+    <script>
+    // Utility to generate simple unique id
+    function genId() {
+        return 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    }
 
-<script>
-function addNews() {
-    const input = document.getElementById("newsInput");
-    const text = input.value.trim();
+    // migrate old format (array of strings) to array of objects {id, text, active}
+    function loadMessages() {
+        let raw = localStorage.getItem('newsMessages');
+        if (!raw) return [];
+        try {
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            // check first item type
+            if (parsed.length && typeof parsed[0] === 'string') {
+                // migrate
+                const migrated = parsed.map(s => ({ id: genId(), text: s, active: true }));
+                localStorage.setItem('newsMessages', JSON.stringify(migrated));
+                return migrated;
+            }
+            // already objects
+            return parsed.map(item => ({ id: item.id || genId(), text: item.text || '', active: item.active !== false }));
+        } catch (e) {
+            console.error('Failed to parse newsMessages', e);
+            return [];
+        }
+    }
 
-    if (!text) return alert("Xabar kiriting!");
+    function saveMessages(arr) {
+        localStorage.setItem('newsMessages', JSON.stringify(arr));
+    }
 
-    let news = JSON.parse(localStorage.getItem("newsMessages")) || [];
-    news.push(text);
-    localStorage.setItem("newsMessages", JSON.stringify(news));
+    function renderMessages() {
+        const container = document.getElementById('messagesList');
+        container.innerHTML = '';
+        const list = loadMessages();
+        if (!list.length) {
+            const p = document.createElement('div');
+            p.style.color = '#666';
+            p.style.fontStyle = 'italic';
+            p.textContent = 'Hech qanday xabar yo‘q.';
+            container.appendChild(p);
+            return;
+        }
 
-    input.value = "";
-    alert("Qo'shildi ✅");
-}
-</script>
+        list.forEach(item => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.justifyContent = 'space-between';
+            row.style.padding = '0.4rem';
+            row.style.border = '1px solid #e6e6e6';
+            row.style.borderRadius = '6px';
+            row.style.background = item.active ? '#fff' : '#f8f8f8';
+
+            const txt = document.createElement('div');
+            txt.style.flex = '1';
+            txt.style.marginRight = '0.5rem';
+            txt.textContent = item.text;
+
+            const btnGroup = document.createElement('div');
+            btnGroup.style.display = 'flex';
+            btnGroup.style.gap = '0.4rem';
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = item.active ? 'Deactivate' : 'Activate';
+            toggleBtn.style.padding = '0.35rem 0.6rem';
+            toggleBtn.style.borderRadius = '6px';
+            toggleBtn.style.border = 'none';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.background = item.active ? '#ef4444' : '#10b981';
+            toggleBtn.style.color = '#fff';
+            toggleBtn.onclick = function() { toggleActive(item.id); };
+
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.style.padding = '0.35rem 0.6rem';
+            delBtn.style.borderRadius = '6px';
+            delBtn.style.border = '1px solid #ddd';
+            delBtn.style.cursor = 'pointer';
+            delBtn.onclick = function() { deleteMessage(item.id); };
+
+            btnGroup.appendChild(toggleBtn);
+            btnGroup.appendChild(delBtn);
+
+            row.appendChild(txt);
+            row.appendChild(btnGroup);
+
+            container.appendChild(row);
+        });
+    }
+
+    function addNews() {
+        const input = document.getElementById('newsInput');
+        const text = input.value.trim();
+        if (!text) return alert('Xabar kiriting!');
+
+        const news = loadMessages();
+        news.push({ id: genId(), text, active: true });
+        saveMessages(news);
+        input.value = '';
+        renderMessages();
+        alert('Qo\'shildi ✅');
+    }
+
+    function toggleActive(id) {
+        const list = loadMessages();
+        const idx = list.findIndex(i => i.id === id);
+        if (idx === -1) return;
+        list[idx].active = !list[idx].active;
+        saveMessages(list);
+        renderMessages();
+    }
+
+    function deleteMessage(id) {
+        if (!confirm('O\'chirishni tasdiqlaysizmi?')) return;
+        let list = loadMessages();
+        list = list.filter(i => i.id !== id);
+        saveMessages(list);
+        renderMessages();
+    }
+
+    // Render on load
+    document.addEventListener('DOMContentLoaded', renderMessages);
+
+    // Optional: react to storage changes (other tabs/windows)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'newsMessages') renderMessages();
+    });
+    </script>
 
 </body>
 </html>

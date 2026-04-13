@@ -291,7 +291,6 @@ let _tickerIndex = 0;
 let _tickerPlaying = false;
 
 function loadNews() {
-    const track = document.querySelector(".news-track");
     _newsQueue = JSON.parse(localStorage.getItem("newsMessages")) || [];
 
     if (!_newsQueue || _newsQueue.length === 0) {
@@ -321,18 +320,35 @@ function playNextNews() {
     span.className = 'single-news';
     span.textContent = msg;
 
-    // Duration proportional to length (min 5s)
-    const duration = Math.max(5, Math.min(20, msg.length * 0.15));
-    span.style.animationDuration = duration + 's';
-
-    span.addEventListener('animationend', () => {
-        // advance to next message after current fully leaves
-        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
-        // small timeout to avoid instant reflow overlap
-        setTimeout(playNextNews, 300);
-    }, { once: true });
-
     track.appendChild(span);
+
+    // Measure sizes and animate using Web Animations API so each message
+    // starts fully off-screen to the right and moves fully past the left.
+    const containerWidth = track.clientWidth;
+    const spanWidth = span.offsetWidth;
+
+    // Pixels per second speed (adjustable). Duration computed from distance.
+    const pxPerSec = 120; // higher = faster
+    const distance = containerWidth + spanWidth;
+    const durationMs = Math.max(4000, Math.min(20000, (distance / pxPerSec) * 1000));
+
+    // Place the element just outside the right edge, vertically centered.
+    span.style.transform = `translateX(${containerWidth}px) translateY(-50%)`;
+
+    const anim = span.animate([
+        { transform: `translateX(${containerWidth}px) translateY(-50%)` },
+        { transform: `translateX(${-spanWidth}px) translateY(-50%)` }
+    ], {
+        duration: durationMs,
+        easing: 'linear',
+        fill: 'forwards'
+    });
+
+    anim.onfinish = () => {
+        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
+        span.remove();
+        setTimeout(playNextNews, 300);
+    };
 }
 
 function addNewsMessage(msg) {
