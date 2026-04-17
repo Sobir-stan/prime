@@ -1,9 +1,10 @@
 # Ushbu fayl ma'lumotlar bazasi bilan ishlash uchun asosiy funksiyalarni saqlaydi (CRUD).
 # Ma'lumot qo'shish, o'qish, yangilash kabi barcha jarayonlar shu yerda.
 from sqlalchemy.orm import Session
-from app.db.models import User, Progress
+from app.db.models import User, Progress, News
 from app.schemas import New_user
 from app.core.security import pwd_context
+from datetime import datetime
 
 # Foydalanuvchini username bo'yicha qidirib topish
 def get_user_by_username(db: Session, username: str):
@@ -96,4 +97,43 @@ def get_progress_rank(db: Session, username: str):
         return 0
     # O'zidan ko'proq pechenye yig'ganlarni sanash
     return db.query(Progress).filter(Progress.totalCookies > db_progress.totalCookies).count() + 1
+
+
+# --- News CRUD ---
+def list_news(db: Session):
+    """Return all news ordered newest first."""
+    return db.query(News).order_by(News.created_at.desc()).all()
+
+
+def create_news(db: Session, text: str, active: bool = True):
+    n = News(text=text, active=active, created_at=datetime.utcnow())
+    db.add(n)
+    db.commit()
+    db.refresh(n)
+    return n
+
+
+def set_news_active(db: Session, news_id: int, active: bool):
+    n = db.query(News).filter(News.id == news_id).first()
+    if not n:
+        return False
+    n.active = active
+    db.commit()
+    return True
+
+
+def delete_news(db: Session, news_id: int):
+    n = db.query(News).filter(News.id == news_id).first()
+    if not n:
+        return False
+    db.delete(n)
+    db.commit()
+    return True
+
+
+def delete_all_news(db: Session):
+    db.query(News).delete()
+    db.commit()
+    return True
+
 

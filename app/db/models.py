@@ -1,7 +1,8 @@
 # Ushbu fayl ma'lumotlar bazasining jadvallarini tuzilishini belgilaydi.
 # SQLAlchemy yordamida User va Progress obyektlari yaratilgan.
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime
 from app.db.database import Base
+from datetime import datetime
 
 # Foydalanuvchilar jadvali
 class User(Base):
@@ -26,4 +27,15 @@ class Progress(Base):
     cursor_count = Column(Integer, nullable=False, default=0)
     grandma_count = Column(Integer, nullable=False, default=0)
     factory_count = Column(Integer, nullable=False, default=0)
+
+
+# Yuguruvchi yangiliklar (news) jadvali
+class News(Base):
+    __tablename__ = "news"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    text = Column(String, nullable=False)
+    active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 

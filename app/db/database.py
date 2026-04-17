@@ -23,7 +23,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Ma'lumotlar bazasini dastlabki ishga tushiruvchi funksiya
 def init_db():
-    from app.db.models import User, Progress
+    # ensure all models are imported so tables are created
+    from app.db.models import User, Progress, News
     # Barcha modellar asosida jadvallarni yaratish
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
