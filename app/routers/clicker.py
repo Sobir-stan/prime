@@ -55,3 +55,50 @@ def load_progress(username: str, db: Session = Depends(get_db), current_user: st
         "grandma_count" : row.grandma_count,
         "factory_count" : row.factory_count,
     }
+
+
+# Provide active news messages for the clicker frontend (JSON)
+@router.get("/news")
+def get_news(db: Session = Depends(get_db)):
+    items = crud.list_news(db)
+    # return only active messages
+    active = [
+        {"id": n.id, "text": n.text, "created_at": n.created_at.isoformat()} for n in items if getattr(n, "active", True)
+    ]
+    return {"news": active}
+
+
+# Admin / API endpoints for managing news (used by admin.html or other tools)
+@router.post("/news")
+def create_news(payload: dict, db: Session = Depends(get_db)):
+    text = payload.get('text') if isinstance(payload, dict) else None
+    if not text:
+        return {"error": "text required"}
+    n = crud.create_news(db, text)
+    return {"id": n.id, "text": n.text, "created_at": n.created_at.isoformat(), "active": n.active}
+
+
+@router.post("/news/{news_id}/activate")
+def activate_news(news_id: int, db: Session = Depends(get_db)):
+    ok = crud.set_news_active(db, news_id, True)
+    return {"ok": ok}
+
+
+@router.post("/news/{news_id}/deactivate")
+def deactivate_news(news_id: int, db: Session = Depends(get_db)):
+    ok = crud.set_news_active(db, news_id, False)
+    return {"ok": ok}
+
+
+@router.delete("/news/{news_id}")
+def delete_news(news_id: int, db: Session = Depends(get_db)):
+    ok = crud.delete_news(db, news_id)
+    return {"ok": ok}
+
+
+@router.delete("/news")
+def delete_all_news(db: Session = Depends(get_db)):
+    crud.delete_all_news(db)
+    return {"ok": True}
+
+

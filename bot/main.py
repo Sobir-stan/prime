@@ -1,44 +1,73 @@
 import asyncio
 import logging
+import os
 from aiogram import Bot, Dispatcher
 from bot.handlers import router
-import os
 from dotenv import load_dotenv
 from app.core.config import BASE_DIR
 
-# .env faylini o'qib, muhit o'zgaruvchilariga qo'shish
+# Load .env
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
-# Bot tokenini atrof-muhit (.env) dan olish
+# Bot token
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Asosiy ishga tushirish funksiyasi
+# Configure logging to console and file so we can inspect why the bot stops
+LOG_FILE = BASE_DIR / "bot.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(LOG_FILE, encoding="utf-8")
+    ]
+)
+logger = logging.getLogger(__name__)
+
+
 async def main():
-    # Bot obyektini yaratish
+    if not BOT_TOKEN:
+        logger.error("BOT_TOKEN is not set. Put it into .env or environment and restart.")
+        return
+
     bot = Bot(token=BOT_TOKEN)
-    # Xabarlarni taqsimlovchi Dispatcher ni yaratish
     dp = Dispatcher()
-    # Marshrutlarni (handlerlar) ulash
     dp.include_router(router)
-    
-    # Log yozish sozlamasi
-    logging.basicConfig(level=logging.INFO)
-    
-    from aiogram.types import MenuButtonWebApp, WebAppInfo
-    from bot.handlers import URL
+
+    # Try to set menu button (non-fatal)
     try:
+        from aiogram.types import MenuButtonWebApp, WebAppInfo
+        from bot.handlers import URL
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(text="🎮 O'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))
         )
-        logging.info(f"Menu Button URL updated to {URL}/clicker")
+        logger.info(f"Menu Button URL updated to {URL}/clicker")
     except Exception as e:
-        logging.error(f"Failed to update menu button: {e}")
+        logger.warning(f"Failed to update menu button: {e}")
 
-    # Oldingi eskirgan xabarlarni o'tkazib yuborish (Webhookni uchirish)
-    await bot.delete_webhook(drop_pending_updates=True)
-    # Botni ishga tushirish
-    await dp.start_polling(bot)
+    # ensure webhook removed
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception:
+        logger.exception("Failed to delete webhook (continuing)")
 
-# Dastur o'zi tomonidan chaqirilganda main qismini ishga tushirish
+    # Run polling in a resilient loop with backoff so transient errors won't stop the process
+    backoff = 5
+    max_backoff = 300
+    while True:
+        try:
+            logger.info("Starting polling...")
+            await dp.start_polling(bot)
+            logger.info("Dispatcher polling finished normally. Exiting loop.")
+            break
+        except Exception:
+            logger.exception(f"Polling failed. Restarting in {backoff}s...")
+            await asyncio.sleep(backoff)
+            backoff = min(max_backoff, int(backoff * 1.5))
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user (KeyboardInterrupt)")

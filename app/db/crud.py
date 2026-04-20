@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.models import User, Progress, News
 from app.schemas import New_user
 from app.core.security import pwd_context
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Foydalanuvchini username bo'yicha qidirib topish
 def get_user_by_username(db: Session, username: str):
@@ -106,7 +106,7 @@ def list_news(db: Session):
 
 
 def create_news(db: Session, text: str, active: bool = True):
-    n = News(text=text, active=active, created_at=datetime.utcnow())
+    n = News(text=text, active=active, created_at=datetime.now(timezone.utc))
     db.add(n)
     db.commit()
     db.refresh(n)

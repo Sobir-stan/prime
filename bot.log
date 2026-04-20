@@ -1,0 +1,29 @@
+2026-04-17 15:50:43,124 [INFO] __main__: Menu Button URL updated to https://stan.uz/clicker
+2026-04-17 15:50:43,211 [INFO] __main__: Starting polling...
+2026-04-17 15:50:43,212 [INFO] aiogram.dispatcher: Start polling
+2026-04-17 15:50:43,302 [INFO] aiogram.dispatcher: Run polling for bot @Sfdevo_bot id=8607222669 - 'Standford - IT'
+2026-04-17 15:56:27,143 [INFO] aiogram.event: Update id=806375937 is handled. Duration 288 ms by bot id=8607222669
+2026-04-17 15:56:38,964 [INFO] aiogram.event: Update id=806375938 is handled. Duration 136 ms by bot id=8607222669
+2026-04-17 16:00:23,297 [INFO] aiogram.event: Update id=806375939 is handled. Duration 117 ms by bot id=8607222669
+2026-04-17 16:00:28,572 [INFO] aiogram.event: Update id=806375940 is not handled. Duration 0 ms by bot id=8607222669
+2026-04-17 16:00:38,102 [INFO] aiogram.event: Update id=806375941 is handled. Duration 125 ms by bot id=8607222669
+2026-04-17 16:05:07,103 [INFO] aiogram.event: Update id=806375942 is handled. Duration 421 ms by bot id=8607222669
+2026-04-20 14:44:28,337 [INFO] __main__: Menu Button URL updated to https://nonrepresentatively-weldless-otha.ngrok-free.dev/clicker
+2026-04-20 14:44:28,434 [INFO] __main__: Starting polling...
+2026-04-20 14:44:28,435 [INFO] aiogram.dispatcher: Start polling
+2026-04-20 14:44:28,540 [INFO] aiogram.dispatcher: Run polling for bot @Sfdevo_bot id=8607222669 - 'Standford - IT'
+2026-04-20 14:45:06,092 [INFO] aiogram.event: Update id=806375945 is not handled. Duration 1 ms by bot id=8607222669
+2026-04-20 14:45:11,572 [INFO] aiogram.event: Update id=806375946 is handled. Duration 360 ms by bot id=8607222669
+2026-04-20 14:45:21,183 [INFO] aiogram.event: Update id=806375947 is handled. Duration 148 ms by bot id=8607222669
+2026-04-20 14:45:45,911 [INFO] aiogram.event: Update id=806375948 is handled. Duration 108 ms by bot id=8607222669
+2026-04-20 14:46:04,694 [INFO] aiogram.event: Update id=806375949 is handled. Duration 306 ms by bot id=8607222669
+2026-04-20 14:46:13,703 [INFO] aiogram.event: Update id=806375950 is handled. Duration 125 ms by bot id=8607222669
+2026-04-20 14:46:29,977 [INFO] aiogram.event: Update id=806375951 is handled. Duration 119 ms by bot id=8607222669
+2026-04-20 14:46:46,048 [INFO] aiogram.event: Update id=806375952 is handled. Duration 124 ms by bot id=8607222669
+2026-04-20 14:49:13,020 [INFO] aiogram.event: Update id=806375953 is handled. Duration 113 ms by bot id=8607222669
+2026-04-20 14:50:13,635 [INFO] aiogram.event: Update id=806375954 is handled. Duration 116 ms by bot id=8607222669
+2026-04-20 14:51:55,896 [INFO] aiogram.dispatcher: Polling stopped
+2026-04-20 14:51:55,900 [ERROR] aiogram.dispatcher: Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2026-04-20 14:51:55,901 [WARNING] aiogram.dispatcher: Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8607222669)
+2026-04-20 14:51:56,154 [INFO] aiogram.dispatcher: Polling stopped for bot @Sfdevo_bot id=8607222669 - 'Standford - IT'
+2026-04-20 14:51:56,155 [INFO] __main__: Bot stopped by user (KeyboardInterrupt)

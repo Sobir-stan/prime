@@ -289,30 +289,61 @@ window.logoutUser = async function () {
 let _newsQueue = [];
 let _tickerIndex = 0;
 let _tickerPlaying = false;
+let _currentAnim = null; // reference to current Web Animation so we can cancel when queue changes
+let _lastRawNews = null; // serialized localStorage snapshot
 
-function loadNews() {
-    // Load raw value and handle migration from string-array to objects
-    let raw = localStorage.getItem("newsMessages");
-    if (!raw) {
-        _newsQueue = [];
-    } else {
-        try {
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed) || parsed.length === 0) {
-                _newsQueue = [];
-            } else if (typeof parsed[0] === 'string') {
-                // migrate to objects
-                const migrated = parsed.map(s => ({ id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: s, active: true, createdAt: new Date().toISOString() }));
-                localStorage.setItem('newsMessages', JSON.stringify(migrated));
-                _newsQueue = migrated.filter(m => m.active);
-            } else {
-                // already objects
-                _newsQueue = parsed.map(item => ({ id: item.id || ('m_' + Date.now() + '_' + Math.floor(Math.random()*1000)), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() })).filter(m => m.active && m.text);
+async function loadNews() {
+    // Try server-first: fetch active news from server endpoint
+    let usedServer = false;
+    try {
+        const resp = await fetch('/news');
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data && Array.isArray(data.news) && data.news.length > 0) {
+                // map server items to ticker format
+                const list = data.news.map(n => ({ id: n.id, text: n.text, active: true, createdAt: n.created_at }));
+                // if queue changed, cancel current animation so new list starts clean
+                const serialized = JSON.stringify(list.map(i => i.id + '::' + i.text));
+                if (serialized !== _lastRawNews) {
+                    try { if (_currentAnim && typeof _currentAnim.cancel === 'function') _currentAnim.cancel(); } catch (e) {}
+                    _newsQueue = list.filter(m => m.text && m.text.trim());
+                    _lastRawNews = serialized;
+                }
+                usedServer = true;
             }
-        } catch (e) {
-            console.error('Failed to parse newsMessages in clicker:', e);
-            _newsQueue = [];
         }
+    } catch (e) {
+        // server may be unreachable; fallback to localStorage below
+        // console.warn('Failed to fetch server news:', e);
+    }
+
+    if (!usedServer) {
+        // Fallback: read from localStorage (admin.html)
+        let raw = localStorage.getItem("newsMessages");
+        if (!raw) {
+            _newsQueue = [];
+        } else {
+            try {
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || parsed.length === 0) {
+                    _newsQueue = [];
+                } else if (typeof parsed[0] === 'string') {
+                    // migrate to objects
+                    const migrated = parsed.map(s => ({ id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: s, active: true, createdAt: new Date().toISOString() }));
+                    localStorage.setItem('newsMessages', JSON.stringify(migrated));
+                    _newsQueue = migrated.filter(m => m.active);
+                } else {
+                    // already objects
+                    _newsQueue = parsed.map(item => ({ id: item.id || ('m_' + Date.now() + '_' + Math.floor(Math.random()*1000)), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() })).filter(m => m.active && m.text);
+                }
+            } catch (e) {
+                console.error('Failed to parse newsMessages in clicker:', e);
+                _newsQueue = [];
+            }
+        }
+
+        // store serialized snapshot for change detection
+        try { _lastRawNews = JSON.stringify(_newsQueue.map(i => i.id + '::' + i.text)); } catch (e) { _lastRawNews = null; }
     }
 
     // If not currently playing, start the sequential ticker only when there are messages
@@ -368,8 +399,11 @@ function playNextNews() {
         easing: 'linear',
         fill: 'forwards'
     });
+    // keep global ref so we can cancel animation if queue changes
+    _currentAnim = anim;
 
     anim.onfinish = () => {
+        _currentAnim = null;
         _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
         span.remove();
         // small delay between messages
@@ -447,3 +481,9 @@ if (document.readyState === 'loading') {
     wireNewsControls();
     loadNews();
 }
+
+// Poll server for news changes every 5 seconds (for environments where storage event may not fire)
+setInterval(() => {
+    loadNews();
+}, 5000);
+

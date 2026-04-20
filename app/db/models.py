@@ -2,7 +2,7 @@
 # SQLAlchemy yordamida User va Progress obyektlari yaratilgan.
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime
 from app.db.database import Base
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Foydalanuvchilar jadvali
 class User(Base):
@@ -36,6 +36,6 @@ class News(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     text = Column(String, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

@@ -134,41 +134,24 @@
 
     <!-- SCRIPT FOR AJAX (FETCHING APIS) -->
     <script>
-    // Utility to generate simple unique id
-    function genId() {
-        return 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000);
-    }
-
-    // migrate old format (array of strings) to array of objects {id, text, active}
-    function loadMessages() {
-        let raw = localStorage.getItem('newsMessages');
-        if (!raw) return [];
+    // Admin now uses server-backed API so changes affect all clients (including TG bot changes)
+    async function fetchMessages() {
         try {
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed)) return [];
-            // check first item type
-            if (parsed.length && typeof parsed[0] === 'string') {
-                // migrate string-array -> objects with createdAt and active
-                const migrated = parsed.map(s => ({ id: genId(), text: s, active: true, createdAt: new Date().toISOString() }));
-                localStorage.setItem('newsMessages', JSON.stringify(migrated));
-                return migrated;
-            }
-            // already objects - normalize fields and preserve createdAt if present
-            return parsed.map(item => ({ id: item.id || genId(), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() }));
+            const resp = await fetch('/news');
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            // data.news is array of {id, text, created_at}
+            return data.news.map(n => ({ id: n.id, text: n.text, active: true, createdAt: n.created_at }));
         } catch (e) {
-            console.error('Failed to parse newsMessages', e);
+            console.error('Failed to fetch /news', e);
             return [];
         }
     }
 
-    function saveMessages(arr) {
-        localStorage.setItem('newsMessages', JSON.stringify(arr));
-    }
-
-    function renderMessages() {
+    async function renderMessages() {
         const container = document.getElementById('messagesList');
         container.innerHTML = '';
-        const list = loadMessages();
+        const list = await fetchMessages();
         if (!list.length) {
             const p = document.createElement('div');
             p.style.color = '#666';
@@ -240,42 +223,58 @@
         });
     }
 
-    function addNews() {
+    async function addNews() {
         const input = document.getElementById('newsInput');
         const text = input.value.trim();
         if (!text) return alert('Xabar kiriting!');
-
-        const news = loadMessages();
-        news.push({ id: genId(), text, active: true, createdAt: new Date().toISOString() });
-        saveMessages(news);
-        input.value = '';
-        renderMessages();
-        alert('Qo\'shildi ✅');
+        try {
+            const resp = await fetch('/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            if (resp.ok) {
+                input.value = '';
+                await renderMessages();
+                alert('Qo\'shildi ✅');
+            } else {
+                alert('Serverga yubib bo\'lmadi');
+            }
+        } catch (e) {
+            console.error('Failed to POST news', e);
+            alert('Xato: server bilan bog\'lanib bo\'lmadi');
+        }
     }
 
-    function toggleActive(id) {
-        const list = loadMessages();
-        const idx = list.findIndex(i => i.id === id);
-        if (idx === -1) return;
-        list[idx].active = !list[idx].active;
-        saveMessages(list);
-        renderMessages();
+    async function toggleActive(id) {
+        try {
+            // no status field in list; toggle by attempting deactivate then activate depending on current button label
+            // For simplicity, call deactivate endpoint if current label contains 'Deactivate'
+            const btn = event.target;
+            const doDeactivate = btn && btn.textContent && btn.textContent.includes('Deactivate');
+            const path = `/news/${id}/${doDeactivate ? 'deactivate' : 'activate'}`;
+            const resp = await fetch(path, { method: 'POST' });
+            if (resp.ok) await renderMessages();
+        } catch (e) {
+            console.error('toggleActive error', e);
+        }
     }
 
-    function deleteMessage(id) {
+    async function deleteMessage(id) {
         if (!confirm('O\'chirishni tasdiqlaysizmi?')) return;
-        let list = loadMessages();
-        list = list.filter(i => i.id !== id);
-        saveMessages(list);
-        renderMessages();
+        try {
+            const resp = await fetch(`/news/${id}`, { method: 'DELETE' });
+            if (resp.ok) await renderMessages();
+        } catch (e) {
+            console.error('deleteMessage error', e);
+        }
     }
 
     // Render on load
-    document.addEventListener('DOMContentLoaded', renderMessages);
-
-    // Optional: react to storage changes (other tabs/windows)
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'newsMessages') renderMessages();
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMessages();
+        // refresh list every 5 seconds so admin page stays in sync
+        setInterval(renderMessages, 5000);
     });
     </script>
 

@@ -3,6 +3,10 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from app.db.database import SessionLocal
 from app.db import crud
+import os
+
+# WebApp ga yo'naltiruvchi havola (Ngrok avtomatik tarzda sozlanadi)
+URL = os.getenv("NGROK_URL", "https://stan.uz")
 
 """Minimal bot handlers for managing running news messages.
 
@@ -24,16 +28,18 @@ router = Router()
 async def yangiliklar_handler(message: Message):
     db = SessionLocal()
     try:
+        # Only show active messages to users of /yangiliklar
         items = crud.list_news(db)
-        if not items:
-            await message.reply("Hozircha hech qanday yangilik yo'q.")
+        active = [n for n in items if getattr(n, 'active', False)]
+        if not active:
+            await message.reply("Hozircha hech qanday faol yangilik yo'q.")
             return
 
-        text = "📣 Yuguruvchi yangiliklar:\n\n"
-        for n in items:
-            status = '✅ active' if n.active else '⛔ inactive'
+        text = "📣 Yuguruvchi yangiliklar (faol):\n\n"
+        for n in active:
+            # show id and timestamp and a short preview
             short = (n.text[:120] + '...') if len(n.text) > 120 else n.text
-            text += f"#{n.id} [{status}] ({n.created_at})\n{short}\n\n"
+            text += f"#{n.id} ({n.created_at})\n{short}\n\n"
 
         text += "Foydalanish: /add <text> , /deactivate <id>, /activate <id>, /delete <id>, /delete_all\n"
         await message.reply(text)
@@ -51,7 +57,7 @@ async def add_handler(message: Message):
     db = SessionLocal()
     try:
         n = crud.create_news(db, text)
-        await message.reply(f"Qo'shildi ✅ #${n.id}")
+        await message.reply(f"Qo'shildi ✅ #{n.id}")
     finally:
         db.close()
 
@@ -63,7 +69,7 @@ async def _parse_id_arg(message: Message):
     try:
         return int(parts[1].strip()), None
     except ValueError:
-        return None, 'Id butun son bo'lishi kerak.'
+        return None, 'Id butun son bolishi kerak.'
 
 
 @router.message(Command("activate"))
@@ -125,3 +131,14 @@ async def delete_all_handler(message: Message):
         await message.reply("Barcha yangiliklar o'chirildi.")
     finally:
         db.close()
+
+
+@router.message(Command("status"))
+async def status_handler(message: Message):
+    """Simple liveness check from Telegram to see if bot is responsive."""
+    try:
+        await message.reply("Bot is running ✅")
+    except Exception as e:
+        # best-effort reply; if it fails, just raise so aiogram logs it
+        raise
+
