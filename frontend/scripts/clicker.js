@@ -239,17 +239,21 @@ function setSkin(skins) {
     document.getElementById('skins').classList.add('active');
 }
 
-bigCookie.addEventListener('mousedown', (e) => {
-    cookies += 1;
-    totalCookies += 1;
+// Barcha skin elementlari uchun click event
+const allSkins = ['bigCookie', 'bigEgg', 'bigOrenge', 'bigCoin'];
 
-    spawnFloatingText(e.clientX, e.clientY);
-
-    bigCookie.classList.remove('clicked');
-    void bigCookie.offsetWidth;
-    bigCookie.classList.add('clicked');
-
-    updateUI();
+allSkins.forEach(skinId => {
+    const el = document.getElementById(skinId);
+    if (!el) return;
+    el.addEventListener('mousedown', (e) => {
+        cookies += 1;
+        totalCookies += 1;
+        spawnFloatingText(e.clientX, e.clientY);
+        el.classList.remove('clicked');
+        void el.offsetWidth;
+        el.classList.add('clicked');
+        updateUI();
+    });
 });
 
 function spawnFloatingText(x, y) {

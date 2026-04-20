@@ -192,102 +192,26 @@
             border-radius: 40% 60% 50% 50%;
         }
 
-        /* The Egg */
-        .egg {
-            width: 200px;
-            height: 180px;
-            background: #fdfdfd;
-            border-radius: 50% 60% 55% 50%;
-            display: none;
+        /* Skin rasmlar */
+        .skin-img {
+            width: 260px;
+            height: 260px;
+            object-fit: contain;
             position: absolute;
-            margin: auto;
             inset: 0;
-            align-items: center;
-            justify-content: center;
-            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.05);
+            margin: auto;
+            display: none;
+            cursor: pointer;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+            transition: transform 0.1s ease;
         }
 
-        .active{
+        .skin-img.active {
             display: block;
         }
 
-
-        .yolk {
-            width: 90px;
-            height: 90px;
-            background: #ffcc00;
-            border-radius: 50%;
-            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 3px 3px 10px rgba(255, 204, 0, 0.4);
-        }
-
-        /* The Orange */
-        .orange {
-            width: 200px;
-            height: 200px;
-            background: #ff8c00;
-            border-radius: 50%;
-            position: absolute;
-            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.15);
-            display: none;
-            inset: 0;
-            margin: auto;
-        }
-
-        .active{
-            display: block;
-        }
-
-        .dots {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 50%;
-        }
-        .d1 { top: 50px; left: 60px; }
-        .d2 { top: 120px; left: 140px; }
-        .d3 { top: 80px; left: 100px; }
-        .leaf {
-            width: 40px;
-            height: 60px;
-            background: #4caf50;
-            border-radius: 0 100% 0 100%;
-            position: absolute;
-            top: -20px;
-            left: 100px;
-            transform: rotate(-15deg);
-        }
-
-
-        /* coin */
-        .coin {
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
-            border-radius: 50%;
-            position: absolute;
-            display: none;
-            inset: 0;
-            margin: auto;
-            align-items: center;
-            justify-content: center;
-            border: 10px solid #f1c40f;
-            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.5), 0 0 0 8px #d4af37;
-        }
-
-        .active{
-            display: block;
-        }
-
-        .symbol {
-            font-family: 'Arial', sans-serif;
-            font-size: 100px;
-            font-weight: bold;
-            color: #b8860b;
-            text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.3), -1px -1px 2px rgba(0,0,0,0.3);
-            user-select: none;
-            text-align: center;
-            margin-top:40px;
+        .skin-img.clicked {
+            animation: clickAnim 0.1s ease-out;
         }
 
 
@@ -439,18 +363,23 @@
                     <div class="chip"></div>
                     <div class="chip"></div>
                 </div>
-                <div class="egg" id="bigEgg">
-                    <div class="yolk"></div>
-                </div>
-                <div class="orange" id="bigOrenge">
-                       <div class="dots d1"></div>
-                        <div class="dots d2"></div>
-                        <div class="dots d3"></div>
-                        <div class="leaf"></div>
-                </div>
-                <div class="coin" id="bigCoin">
-                    <div class="symbol">$</div>
-                </div>
+                <!-- Egg skin — rasmni /static/img/egg.png ga almashtiring -->
+                <img class="skin-img" id="bigEgg"
+                     src="/static/img/egg.png"
+                     onerror="this.src='https://placehold.co/260x260/1f2937/ffffff?text=🥚+Egg'"
+                     alt="Egg skin" />
+
+                <!-- Orange skin — rasmni /static/img/orange.png ga almashtiring -->
+                <img class="skin-img" id="bigOrenge"
+                     src="frontend/img/apilsin.jpg"
+                     onerror="this.src='https://placehold.co/260x260/1f2937/ff8c00?text=🍊+Orange'"
+                     alt="Orange skin" />
+
+                <!-- Coin skin — rasmni /static/img/coin.png ga almashtiring -->
+                <img class="skin-img" id="bigCoin"
+                     src="/static/img/coin.png"
+                     onerror="this.src='https://placehold.co/260x260/1f2937/ffcc00?text=🪙+Coin'"
+                     alt="Coin skin" />
             </div>
         </section>
 
