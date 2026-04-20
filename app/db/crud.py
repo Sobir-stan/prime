@@ -1,5 +1,6 @@
 # Ushbu fayl ma'lumotlar bazasi bilan ishlash uchun asosiy funksiyalarni saqlaydi (CRUD).
 # Ma'lumot qo'shish, o'qish, yangilash kabi barcha jarayonlar shu yerda.
+from sqlalchemy import select
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from app.db.models import User, Progress, Skin, UserSkin
@@ -282,15 +283,13 @@ def get_user_owned_skins(session: Session, username: str) -> List[Dict[str, Any]
 
 
 def get_available_skins_for_user(session: Session, username: str) -> List[Dict[str, Any]]:
-    """
-    Returns list of skins the user hasn't bought yet.
-    """
     user = session.query(User).filter_by(username=username).first()
     if not user:
         return []
 
-    owned_subq = session.query(UserSkin.skin_id).filter(UserSkin.user_id == user.id).subquery()
-    skins = session.query(Skin).filter(~Skin.id.in_(owned_subq)).all()
+    # subquery() o'rniga select() ishlatish
+    owned_ids = select(UserSkin.skin_id).where(UserSkin.user_id == user.id)
+    skins = session.query(Skin).filter(~Skin.id.in_(owned_ids)).all()
 
     result: List[Dict[str, Any]] = []
     for skin in skins:
@@ -301,6 +300,7 @@ def get_available_skins_for_user(session: Session, username: str) -> List[Dict[s
             "description": skin.description,
             "rarity": skin.rarity,
             "image": skin.image,
+            "type": skin.type,
         })
     return result
 
