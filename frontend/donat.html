@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+<style>
+
+    :root {
+        --bg-color: #111827;
+        --text-color: #f3f4f6;
+        --text-muted: #9ca3af;
+        --panel-bg: rgba(255, 255, 255, 0.05);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --primary-color: #fbbf24;
+        --primary-hover: #f59e0b;
+    }
+
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: radial-gradient(circle at center, #1f2937, var(--bg-color));
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem;
+        box-sizing: border-box;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .container {
+        background: var(--panel-bg);
+        backdrop-filter: blur(10px);
+        padding: 2.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        width: 100%;
+        max-width: 800px;
+        position: relative;
+        z-index: 10;
+        box-sizing: border-box;
+    }
+
+    h1 {
+        font-size: 2rem;
+        text-align: center;
+        color: var(--primary-color);
+        letter-spacing: 2px;
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 1.8rem;
+        color: #d97706;
+        margin-top: 10px;
+    }
+
+    .tugma {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .tugma button {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .tugma button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: var(--primary-color);
+    }
+
+    .price {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 5px;
+    }
+
+    .tugma button:hover .price {
+    color: var(--primary-color);
+    }
+
+    .holat { text-align:center; margin-top:16px; color: #6ee7b7 }
+
+</style>
+
+
+</head>
+<body>
+
+<div class="container">
+    <h1>🛒 Cookie Shop</h1>
+    <h2>🎨 Choose Your Skin</h2>
+    <div class="tugma">
+    <button data-skin-id="1" onclick="setSkinFromBtn(event)">
+        🍪 Cookie
+        <span class="price">Free</span>
+    </button>
+
+    <button data-skin-id="2" onclick="setSkinFromBtn(event)">
+        🥚 Egg
+        <span class="price">50 🍪</span>
+    </button>
+
+    <button data-skin-id="3" onclick="setSkinFromBtn(event)">
+        🍊 Orange
+        <span class="price">100 🍪</span>
+    </button>
+
+    <button data-skin-id="4" onclick="setSkinFromBtn(event)">
+        🪙 Coin
+        <span class="price">200 🍪</span>
+    </button>
+</div>
+<div class="holat" id="holat"></div>
+</div>
+</body>
+    <script type="module">
+    import { buySpecificSkin, fetchSkinSummary, tryAutoBuySkin } from '/static/scripts/slicker.js';
+
+    window.setSkinFromBtn = async function (event) {
+        const btn = event.currentTarget;
+        const skinId = Number(btn.getAttribute('data-skin-id'));
+        const user = localStorage.getItem('primeUser');
+        const holat = document.getElementById('holat');
+
+        console.log("setSkinFromBtn clicked", { skinId, user });
+
+        if (!user) {
+            holat.textContent = 'Please log in first.';
+            return;
+        }
+
+        holat.textContent = 'Processing...';
+
+        try {
+            const res = await buySpecificSkin(user, skinId);
+            console.log('buySpecificSkin result', res);
+            if (res.ok) {
+                // After successful purchase, fetch summary to get equipped skin info
+                try {
+                    const summary = await fetchSkinSummary(user);
+                    let equipped = null;
+                    if (summary && Array.isArray(summary.owned)) {
+                        equipped = summary.owned.find(s => s.equipped === true) || null;
+                    }
+                    if (equipped) {
+                        // save to localStorage so clicker can apply immediately
+                        try { localStorage.setItem('primeEquippedSkin', JSON.stringify(equipped)); } catch(_) {}
+                        holat.textContent = 'Sotib olindi: ' + (equipped.name || equipped.id);
+                    } else {
+                        holat.textContent = 'Sotib olindi';
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch summary after purchase', e);
+                    holat.textContent = 'Sotib olindi';
+                }
+                // Optional: after short delay, redirect to clicker to see visual change
+                setTimeout(() => { window.location.href = '/clicker'; }, 900);
+                return;
+            } else {
+                // If server says no available skins or not affordable, show message
+                const msg = res.message || (res.result && res.result.message) || 'Sotib olish muvaffaqiyatsiz';
+                const status = res.status || (res.result && res.result.status) || '';
+                holat.textContent = `Error ${status}: ${msg}`;
+            }
+        } catch (e) {
+            holat.textContent = e.message || 'Unexpected error';
+            console.error('setSkinFromBtn error', e);
+        }
+    }
+
+    </script>
+</html>
+

@@ -50,54 +50,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /*!* ✅ MODERN NEWS TICKER *! .news-ticker { width: 100%; overflow: hidden; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid var(--panel-border); white-space: nowrap; } .news-track { display: inline-block; padding-left: 100%; animation: scrollText 15s linear infinite; } .news-track span { margin-right: 4rem; font-weight: 600; color: #fbbf24; } .news-ticker:hover .news-track { animation-play-state: paused; } @keyframes scrollText { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }*/
-        .news-ticker {
-    width: 100%;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid var(--panel-border);
-}
-
-.news-track {
-    display: block;
-    position: relative;
-    height: 48px;
-    overflow: hidden;
-}
-
-.news-track span {
-    padding-right: 4rem;
-    font-weight: 600;
-    color: #fbbf24;
-    white-space: nowrap;
-}
-
-/* KEY FIX */
-@keyframes scrollText {
-    0% {
-        transform: translateX(100vw); /* start fully off screen (right) */
-    }
-    100% {
-        transform: translateX(-100%); /* move fully past left */
-    }
-}
-
-/* Single-message sequential ticker */
-@keyframes slideNews {
-    0% { transform: translateX(100%) translateY(-50%); }
-    100% { transform: translateX(-100%) translateY(-50%); }
-}
-
-.news-track .single-news {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateX(100%) translateY(-50%);
-    white-space: nowrap;
-    font-weight: 600;
-    color: #fbbf24;
-    will-change: transform;
-}
         .user-info {
             font-size: 1.1rem;
             display: flex;
@@ -132,15 +84,10 @@
             position: relative;
         }
 
-        /* Stats Display (positioned above the cookie) */
+        /* Stats Display */
         .stats {
-            position: absolute;
-            top: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%);
             text-align: center;
-            width: 100%;
-            z-index: 20;
+            margin-bottom: 3rem;
         }
 
         .cookie-count {
@@ -244,6 +191,105 @@
             left: 15%;
             border-radius: 40% 60% 50% 50%;
         }
+
+        /* The Egg */
+        .egg {
+            width: 200px;
+            height: 180px;
+            background: #fdfdfd;
+            border-radius: 50% 60% 55% 50%;
+            display: none;
+            position: absolute;
+            margin: auto;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.05);
+        }
+
+        .active{
+            display: block;
+        }
+
+
+        .yolk {
+            width: 90px;
+            height: 90px;
+            background: #ffcc00;
+            border-radius: 50%;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 3px 3px 10px rgba(255, 204, 0, 0.4);
+        }
+
+        /* The Orange */
+        .orange {
+            width: 200px;
+            height: 200px;
+            background: #ff8c00;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: inset -15px -15px 30px rgba(0,0,0,0.15);
+            display: none;
+            inset: 0;
+            margin: auto;
+        }
+
+        .active{
+            display: block;
+        }
+
+        .dots {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 50%;
+        }
+        .d1 { top: 50px; left: 60px; }
+        .d2 { top: 120px; left: 140px; }
+        .d3 { top: 80px; left: 100px; }
+        .leaf {
+            width: 40px;
+            height: 60px;
+            background: #4caf50;
+            border-radius: 0 100% 0 100%;
+            position: absolute;
+            top: -20px;
+            left: 100px;
+            transform: rotate(-15deg);
+        }
+
+
+        /* coin */
+        .coin {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            border-radius: 50%;
+            position: absolute;
+            display: none;
+            inset: 0;
+            margin: auto;
+            align-items: center;
+            justify-content: center;
+            border: 10px solid #f1c40f;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2), 0 15px 35px rgba(0,0,0,0.5), 0 0 0 8px #d4af37;
+        }
+
+        .active{
+            display: block;
+        }
+
+        .symbol {
+            font-family: 'Arial', sans-serif;
+            font-size: 100px;
+            font-weight: bold;
+            color: #b8860b;
+            text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.3), -1px -1px 2px rgba(0,0,0,0.3);
+            user-select: none;
+            text-align: center;
+            margin-top:40px;
+        }
+
 
         /* Floating +1 Animation */
         @keyframes fadeUp {
@@ -354,6 +400,11 @@
 <body>
     <header>
         <div class="title">Cookie Clicker</div>
+        <div style="display: flex; align-items:center; padding-left:900px;  gap: 1rem;">
+            <a href="/donat"
+               style="color: #111827; background: #fbbf24; text-decoration: none; font-weight: bold; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; transition: transform 0.2s;">🍪
+                Do'kon</a>
+        </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <a href="/rating"
                 style="color: #111827; background: #fbbf24; text-decoration: none; font-weight: bold; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.9rem; transition: transform 0.2s;">🏆
@@ -369,29 +420,36 @@
                     style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.8rem; border-radius: 0.5rem; cursor: pointer; font-family: 'Outfit'; font-weight: bold; margin-left: 0.5rem;">Chiqish</button>
             </div>
         </div>
+
     </header>
 
-
-        <!-- ✅ ADDED HERE -->
-        <div class="news-ticker">
-            <div class="news-track"></div>
-        </div>
     <main>
         <section class="click-area">
-
             <div class="stats">
                 <p class="cookie-count"><span id="cookies">0</span></p>
                 <p class="cps">cookies per second: <span id="cps">0</span></p>
             </div>
 
             <div class="cookie-wrapper">
-                <div class="cookie" id="bigCookie">
+                <div class="cookie active" id="bigCookie">
                     <div class="chip"></div>
                     <div class="chip"></div>
                     <div class="chip"></div>
                     <div class="chip"></div>
                     <div class="chip"></div>
                     <div class="chip"></div>
+                </div>
+                <div class="egg" id="bigEgg">
+                    <div class="yolk"></div>
+                </div>
+                <div class="orange" id="bigOrenge">
+                       <div class="dots d1"></div>
+                        <div class="dots d2"></div>
+                        <div class="dots d3"></div>
+                        <div class="leaf"></div>
+                </div>
+                <div class="coin" id="bigCoin">
+                    <div class="symbol">$</div>
                 </div>
             </div>
         </section>
@@ -431,7 +489,7 @@
         </section>
     </main>
 
-    <script src="/static/scripts/clicker.js?v=7"></script>
+    <script src="/static/scripts/clicker.js?v=3"></script>
 </body>
 
 </html>

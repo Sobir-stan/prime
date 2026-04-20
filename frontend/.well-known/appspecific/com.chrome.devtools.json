@@ -1,0 +1,6 @@
+{
+  "name": "prime",
+  "description": "Minimal app-specific manifest for Chrome DevTools probe",
+  "version": "1"
+}
+

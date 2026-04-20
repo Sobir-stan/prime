@@ -55,3 +55,10 @@ def load_progress(username: str, db: Session = Depends(get_db), current_user: st
         "grandma_count" : row.grandma_count,
         "factory_count" : row.factory_count,
     }
+
+@router.get("/donat",response_class=HTMLResponse)
+def donat_page():
+    with open(BASE_DIR/"frontend/donat.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+

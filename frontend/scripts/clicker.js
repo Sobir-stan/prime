@@ -14,38 +14,18 @@ const bigCookie = document.getElementById('bigCookie');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
 
-// Foydalanuvchini sahifaga kirishi bilan taniy boshlash va ma'lumotlarini yuklash
 async function initUser() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tgIdParam = urlParams.get('tg_id');
-    let tgId = null;
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+        const tgId = tgUser.id;
+        const tgUsername = tgUser.username || `user_${tgId}`;
 
-    if (tgIdParam) {
-        tgId = parseInt(tgIdParam);
-    } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        tgId = window.Telegram.WebApp.initDataUnsafe.user.id;
-    }
-
-    const activeUser = localStorage.getItem('primeUser');
-    const activeToken = localStorage.getItem('primeToken');
-
-    if (tgId && activeUser && activeToken) {
-        // Silently bind the Telegram ID to the existing session
-        fetch('/link_telegram', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${activeToken}`
-            },
-            body: JSON.stringify({ telegram_id: tgId })
-        }).catch(e => console.error("Link error", e));
-    } else if (tgId) {
         try {
             window.Telegram.WebApp.expand();
             const resp = await fetch('/tg_login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegram_id: tgId })
+                body: JSON.stringify({ telegram_id: tgId, username: tgUsername })
             });
             if (resp.ok) {
                 const data = await resp.json();
@@ -59,11 +39,7 @@ async function initUser() {
 
     const user = localStorage.getItem('primeUser');
     if (!user) {
-        let finalHash = window.location.hash;
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-            finalHash = '#tgWebAppData=' + window.Telegram.WebApp.initData;
-        }
-        window.location.href = '/' + window.location.search + finalHash;
+        window.location.href = '/';
         return;
     }
 
@@ -71,9 +47,99 @@ async function initUser() {
     avatarInitial.textContent = user.charAt(0).toUpperCase();
 
     await loadProgress(user);
+    // If localStorage has an equipped skin (recently purchased), apply it immediately for instant feedback
+    try {
+        const raw = localStorage.getItem('primeEquippedSkin');
+        if (raw) {
+            try {
+                const equipped = JSON.parse(raw);
+                if (equipped) {
+                    // prefer explicit type if provided
+                    if (equipped.type) applySkinVisualByType(equipped.type);
+                    else if (equipped.name) applySkinVisualByName(equipped.name);
+                }
+            } catch (_) {
+                // ignore parse error
+            }
+        }
+    } catch (e) { console.warn('no local equipped skin', e); }
+    // after local attempt, ensure server state is applied
+    try { await loadAndApplyUserSkin(user); } catch (e) { console.warn('Failed to load user skin', e); }
 }
 
-// Serverdan progressni (nechta pullari borligi va pechenyelari soni) skachat qilish
+// New: fetch skin summary and apply equipped skin to the cookie-wrapper
+async function fetchSkinSummaryForUser(username) {
+    if (!username) return null;
+    try {
+        const resp = await fetch(`/api/skins/summary?user_id=${encodeURIComponent(username)}`);
+        if (!resp.ok) return null;
+        return await resp.json();
+    } catch (e) {
+        console.error('fetchSkinSummaryForUser error', e);
+        return null;
+    }
+}
+
+function hideAllSkins() {
+    const ids = ['bigCookie', 'bigEgg', 'bigOrenge', 'bigCoin'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
+}
+
+function showDefaultCookie() {
+    hideAllSkins();
+    const c = document.getElementById('bigCookie');
+    if (c) c.classList.add('active');
+}
+
+function applySkinVisualByName(name) {
+    // fallback to type-based mapping if name heuristics fail
+    if (!name) { showDefaultCookie(); return; }
+    applySkinVisualByType(name.toLowerCase());
+}
+
+function applySkinVisualByType(type) {
+    hideAllSkins();
+    if (!type) { showDefaultCookie(); return; }
+    const t = type.toLowerCase();
+    // support both explicit type values ('egg','orange','coin','cookie') and fallback names
+    if (t === 'egg' || t.includes('egg')) {
+        const e = document.getElementById('bigEgg'); if (e) { e.classList.add('active'); return; }
+    }
+    if (t === 'orange' || t.includes('orange') || t.includes('apels')) {
+        const o = document.getElementById('bigOrenge'); if (o) { o.classList.add('active'); return; }
+    }
+    if (t === 'coin' || t.includes('coin') || t.includes('tanga')) {
+        const co = document.getElementById('bigCoin'); if (co) { co.classList.add('active'); return; }
+    }
+    // cookie or default
+    const c = document.getElementById('bigCookie'); if (c) { c.classList.add('active'); return; }
+    showDefaultCookie();
+}
+
+async function loadAndApplyUserSkin(username) {
+    const summary = await fetchSkinSummaryForUser(username);
+    if (!summary) return;
+    // summary.owned contains objects with equipped flag
+    if (Array.isArray(summary.owned)) {
+        const equipped = summary.owned.find(s => s.equipped === true);
+        if (equipped) {
+            // apply visual by name
+            applySkinVisualByName(equipped.name);
+            // clear localStorage marker since server state is authoritative now
+            try { localStorage.removeItem('primeEquippedSkin'); } catch (_) {}
+            return;
+        }
+    }
+    // if nothing equipped, show default
+    showDefaultCookie();
+}
+
+// Expose helper to clear local primeEquippedSkin (for tests / manual reset)
+if (typeof window !== 'undefined') window.clearLocalEquippedSkin = function() { try { localStorage.removeItem('primeEquippedSkin'); } catch(_){} };
+
 async function loadProgress(username) {
     try {
         const token = localStorage.getItem('primeToken') || '';
@@ -112,7 +178,6 @@ async function loadProgress(username) {
     }
 }
 
-// Har 10 soniyada progressni serverga (bazaga) doimiy saqlab turish funksiyasi
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
     if (!user) return;
@@ -165,7 +230,15 @@ function updateUI() {
     });
 }
 
-// Katta Cookie ustiga bosilganda chaqiriladigan asosiy o'yin mantiqi (Klyentskiy bosish)
+function setSkin(skins) {
+    document.getElementById('bigOrenge').classList.add('active');
+    document.getElementById('bigCookie').classList.add('active');
+    document.getElementById('bigEgg').classList.add('active');
+    document.getElementById('bigCookie').classList.add('active');
+
+    document.getElementById('skins').classList.add('active');
+}
+
 bigCookie.addEventListener('mousedown', (e) => {
     cookies += 1;
     totalCookies += 1;
@@ -222,6 +295,14 @@ function recalculateCPS() {
     cps = newCps;
 }
 
+setInterval(() => {
+    if (cps > 0) {
+        cookies += cps / 10;
+        totalCookies += cps / 10;
+        updateUI();
+    }
+}, 100);
+
 async function fetchUserRank() {
     const user = localStorage.getItem("primeUser");
 
@@ -250,14 +331,6 @@ async function fetchUserRank() {
 }
 
 setInterval(() => {
-    if (cps > 0) {
-        cookies += cps / 10;
-        totalCookies += cps / 10;
-        updateUI();
-    }
-}, 100);
-
-setInterval(() => {
     saveProgress();
     fetchUserRank();
 }, 10000);
@@ -265,14 +338,9 @@ setInterval(() => {
 initUser();
 fetchUserRank();
 
-// Tizimdan chiqish (Logout) hamda brauzer va Telegram xotirasini tozalash funksiyasi
 window.logoutUser = async function () {
     try {
-        const token = localStorage.getItem('primeToken') || '';
-        await fetch('/logout', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await fetch('/logout', { method: 'POST' });
     } catch (e) {
         console.error("Logout failed:", e);
     }
@@ -286,164 +354,69 @@ window.logoutUser = async function () {
     }
 }
 
-let _newsQueue = [];
-let _tickerIndex = 0;
-let _tickerPlaying = false;
 
-function loadNews() {
-    // Load raw value and handle migration from string-array to objects
-    let raw = localStorage.getItem("newsMessages");
-    if (!raw) {
-        _newsQueue = [];
-    } else {
-        try {
-            const parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed) || parsed.length === 0) {
-                _newsQueue = [];
-            } else if (typeof parsed[0] === 'string') {
-                // migrate to objects
-                const migrated = parsed.map(s => ({ id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: s, active: true, createdAt: new Date().toISOString() }));
-                localStorage.setItem('newsMessages', JSON.stringify(migrated));
-                _newsQueue = migrated.filter(m => m.active);
-            } else {
-                // already objects
-                _newsQueue = parsed.map(item => ({ id: item.id || ('m_' + Date.now() + '_' + Math.floor(Math.random()*1000)), text: item.text || '', active: item.active !== false, createdAt: item.createdAt || new Date().toISOString() })).filter(m => m.active && m.text);
-            }
-        } catch (e) {
-            console.error('Failed to parse newsMessages in clicker:', e);
-            _newsQueue = [];
-        }
+async function checkAndBuySkin(userId, onSuccess) {
+  if (!userId) return { ok: false, message: 'userId required' };
+
+  try {
+    // 1) получить доступные скины для пользователя
+    const availResp = await fetch(`/api/skins/available?user_id=${encodeURIComponent(userId)}`);
+    if (!availResp.ok) return { ok: false, message: 'failed to fetch available skins' };
+    const available = await availResp.json();
+
+    if (!Array.isArray(available) || available.length === 0) {
+      return { ok: false, message: 'no_available_skins' };
     }
 
-    // If not currently playing, start the sequential ticker only when there are messages
-    if (!_tickerPlaying) {
-        _tickerIndex = 0;
-        if (_newsQueue.length > 0) playNextNews();
-    }
-}
+    // 2) выбрать один скин (случайный выбор — можно заменить логикой выбора)
+    const chosen = available[Math.floor(Math.random() * available.length)];
 
-function playNextNews() {
-    const track = document.querySelector(".news-track");
-    if (!_newsQueue || _newsQueue.length === 0) {
-        track.innerHTML = '';
-        _tickerPlaying = false;
-        return;
-    }
-
-    _tickerPlaying = true;
-    const item = _newsQueue[_tickerIndex % _newsQueue.length];
-    const msg = (typeof item === 'string') ? item : (item.text || '');
-    if (!msg) {
-        // skip empty messages
-        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
-        setTimeout(playNextNews, 100);
-        return;
-    }
-
-    track.innerHTML = '';
-    const span = document.createElement('span');
-    span.className = 'single-news';
-    span.textContent = msg;
-
-    track.appendChild(span);
-
-    // Measure sizes and animate using Web Animations API so each message
-    // starts fully off-screen to the right and moves fully past the left.
-    const containerWidth = track.clientWidth;
-    const spanWidth = span.offsetWidth;
-
-    // Pixels per second speed (adjustable). Duration computed from distance.
-    const pxPerSec = 120; // higher = faster
-    const distance = containerWidth + spanWidth;
-    const durationMs = Math.max(3000, Math.min(30000, (distance / pxPerSec) * 1000));
-
-    // Place the element just outside the right edge, vertically centered.
-    span.style.transform = `translateX(${containerWidth}px) translateY(-50%)`;
-
-    const anim = span.animate([
-        { transform: `translateX(${containerWidth}px) translateY(-50%)` },
-        { transform: `translateX(${-spanWidth}px) translateY(-50%)` }
-    ], {
-        duration: durationMs,
-        easing: 'linear',
-        fill: 'forwards'
+    // 3) отправить запрос на покупку (обмен печений на скин)
+    const buyResp = await fetch('/api/skins/buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, skin_id: chosen.id })
     });
 
-    anim.onfinish = () => {
-        _tickerIndex = (_tickerIndex + 1) % _newsQueue.length;
-        span.remove();
-        // small delay between messages
-        setTimeout(() => {
-            // If messages were removed (via storage) and now queue empty, stop
-            if (!_newsQueue || _newsQueue.length === 0) {
-                track.innerHTML = '';
-                _tickerPlaying = false;
-                return;
-            }
-            playNextNews();
-        }, 300);
-    };
-}
+    // ожидаем JSON ответ вида { ok: bool, message: str, ... }
+    const buyResult = await buyResp.json();
 
-function addNewsMessage(msg) {
-    if (!msg) return;
-    msg = msg.toString().trim();
-    if (msg.length === 0) return;
-
-    // Save locally so the ticker updates immediately (store as objects)
-    const raw = JSON.parse(localStorage.getItem("newsMessages")) || [];
-    const toPush = { id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: msg, active: true, createdAt: new Date().toISOString() };
-    raw.push(toPush);
-    localStorage.setItem("newsMessages", JSON.stringify(raw));
-
-    // Try to send to server (if your Java backend exposes /add_news). Failure is non-fatal.
-    try {
-        const token = localStorage.getItem('primeToken') || '';
-        fetch('/add_news', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ message: msg })
-        }).catch(e => console.warn('Failed to POST news to server:', e));
-    } catch (e) {
-        console.warn('Error while posting news:', e);
+    if (buyResp.ok && buyResult.ok) {
+      // опционально обновить UI: передать выбранный скин и ответ в callback
+      if (typeof onSuccess === 'function') {
+        try { onSuccess({ skin: chosen, result: buyResult }); } catch (_) {}
+      }
+      return { ok: true, skin: chosen, result: buyResult };
     }
 
-    loadNews();
+    // не хватило печений или другая ошибка
+    return { ok: false, message: buyResult.message || 'purchase_failed', result: buyResult };
+  } catch (err) {
+    return { ok: false, message: err.message || 'unexpected_error' };
+  }
 }
 
-// React to storage changes from admin page
-window.addEventListener('storage', function(e) {
-    if (e.key === 'newsMessages') {
-        loadNews();
-    }
-});
+// Экспорт/доступ в глобальную область, если нужно
+if (typeof window !== 'undefined') window.checkAndBuySkin = checkAndBuySkin;
 
-// Wire up controls (works whether script is loaded at end or earlier)
-function wireNewsControls() {
-    const input = document.getElementById('newsInput');
-    const btn = document.getElementById('newsAddBtn');
-    if (!input || !btn) return;
-
-    btn.addEventListener('click', () => {
-        addNewsMessage(input.value);
-        input.value = '';
-        input.focus();
-    });
-
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            addNewsMessage(input.value);
-            input.value = '';
-        }
-    });
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { wireNewsControls(); loadNews(); });
-} else {
-    wireNewsControls();
-    loadNews();
+// Listen for storage changes so purchase in another tab updates this page immediately
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (ev) => {
+        if (!ev) return;
+        if (ev.key === 'primeEquippedSkin') {
+            try {
+                const v = ev.newValue ? JSON.parse(ev.newValue) : null;
+                if (v) {
+                    if (v.type) applySkinVisualByType(v.type);
+                    else if (v.name) applySkinVisualByName(v.name);
+                } else if (!v) {
+                     // removed -> reload server state
+                     const user = localStorage.getItem('primeUser');
+                     if (user) loadAndApplyUserSkin(user).catch(()=>{});
+                 }
+             } catch (e) {
+                 console.warn('storage event parse error', e);
+             }
+         }
+     });
 }

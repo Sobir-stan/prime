@@ -1,127 +1,92 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.fsm.context import FSMContext
 from app.db.database import SessionLocal
-from app.db import crud
+from app.db.models import Progress
 
-"""Minimal bot handlers for managing running news messages.
-
-Supported commands:
-  /yangiliklar        - list existing news and show usage
-  /add <text>         - add a new news message (active by default)
-  /activate <id>      - mark news active
-  /deactivate <id>    - mark news inactive
-  /delete <id>        - delete specific news
-  /delete_all         - delete all news
-
-This file intentionally keeps only the news-related handlers per your request.
-"""
+# Ushbu fayl aiogram orqali Telegram botning xabarlarini qayta ishlashni (handler) taminlaydi.
+# Komandalar (/start), menyu tugmalari va WebApp havolasi shu faylda yaratiladi va sozlanadi.
 
 router = Router()
 
+# WebApp ga yo'naltiruvchi havola (Ngrok yoki sizning domeningiz)
+URL = "https://ellie-ramulose-lajuana.ngrok-free.dev"
 
-@router.message(Command("yangiliklar"))
-async def yangiliklar_handler(message: Message):
+# Asosiy klaviatura (menyular) ni yaratish
+def get_main_keyboard():
+    builder = ReplyKeyboardBuilder()
+
+    # WebApp tugmasini qo'shish
+    builder.button(text="🎮 Clicker O'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))
+    builder.button(text="🏆 Reyting")
+    builder.button(text="💼 Vazifalar")
+    builder.button(text="🛒 Cookie Shop")
+    # Tugmalarni ustun qilib joylash
+    builder.adjust(2, 2)
+    return builder.as_markup(resize_keyboard=True)
+
+# /start komandasiga javob beruvchi handler
+@router.message(Command("start"))
+async def start_handler(message: Message, state: FSMContext):
+    # FSM (holat) ni tozalash
+    await state.clear()
+    
+    # Foydalanuvchiga salomlashish va klaviaturani ko'rsatish
+    await message.answer(
+        f"Salom, {message.from_user.first_name}! Clicker o'yiniga xush kelibsiz.\n\n"
+        "Mini App'ni ishga tushirish uchun 'Clicker O'ynash' tugmasini bosing.",
+        reply_markup=get_main_keyboard()
+    )
+
+# "🏆 Reyting" tugmasi bosilganda ishlovchi handler
+@router.message(F.text == "🏆 Reyting")
+async def rating_handler(message: Message, state: FSMContext):
+    await state.clear()
     db = SessionLocal()
     try:
-        items = crud.list_news(db)
-        if not items:
-            await message.reply("Hozircha hech qanday yangilik yo'q.")
+        # Eng ko'p pechenye yig'gan Top-10 ni bazadan olish
+        top = db.query(Progress).order_by(Progress.totalCookies.desc()).limit(10).all()
+        # Agar reyting bo'sh bo'lsa
+        if not top:
+            await message.answer("Reyting hozircha bo'sh.")
             return
 
-        text = "📣 Yuguruvchi yangiliklar:\n\n"
-        for n in items:
-            status = '✅ active' if n.active else '⛔ inactive'
-            short = (n.text[:120] + '...') if len(n.text) > 120 else n.text
-            text += f"#{n.id} [{status}] ({n.created_at})\n{short}\n\n"
-
-        text += "Foydalanish: /add <text> , /deactivate <id>, /activate <id>, /delete <id>, /delete_all\n"
-        await message.reply(text)
+        response = "🏆 **TOP 10 O'yinchilar** 🏆\n\n"
+        # Reyting ro'yxatini matn sifatida yasash
+        for i, p in enumerate(top, 1):
+            response += f"{i}. {p.username} — {int(p.totalCookies)} ta pechenye\n"
+        
+        # Markdown formatida xabarni yuborish
+        await message.answer(response, parse_mode="Markdown")
     finally:
+        # Bazani ulanishni majburiy yopish
         db.close()
 
-
-@router.message(Command("add"))
-async def add_handler(message: Message):
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2 or not parts[1].strip():
-        await message.reply("Iltimos xabar matnini kiriting: /add <matn>")
-        return
-    text = parts[1].strip()
-    db = SessionLocal()
-    try:
-        n = crud.create_news(db, text)
-        await message.reply(f"Qo'shildi ✅ #${n.id}")
-    finally:
-        db.close()
+# "💼 Vazifalar" tugmasi bosilganda ishlovchi handler
+@router.message(F.text == "💼 Vazifalar")
+async def tasks_handler(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Bu yerda vazifalar bo'ladi (masalan, kanallarga obuna bo'lish). Bu funksiya hali ishlab chiqilmoqda!")
 
 
-async def _parse_id_arg(message: Message):
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2:
-        return None, 'Iltimos id kiriting: /<command> <id>'
-    try:
-        return int(parts[1].strip()), None
-    except ValueError:
-        return None, 'Id butun son bo'lishi kerak.'
+@router.message(F.text == "🛒 Cookie Shop")
+async def shop_handler(message: Message, state: FSMContext):
+    await state.clear()
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🪙 Coin", callback_data="but_coin"),
+                InlineKeyboardButton(text="🥚 Egg", callback_data="buy_egg"),
+                InlineKeyboardButton(text="🍊 Orange", callback_data="buy_orange")
+            ]
+        ]
+    )
+    await message.answer("cookie shopdagi mahsulotlar ro'yxati va narxlari \n"
+                         "1. Coin - 200 ta pechenye \n"
+                         "2. Egg - 50 ta pechenye \n"
+                         "3. Orange - 100 ta pechenye",
+                         reply_markup=keyboard())
 
 
-@router.message(Command("activate"))
-async def activate_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.set_news_active(db, nid, True)
-        if ok:
-            await message.reply(f"# {nid} ✅ activated")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("deactivate"))
-async def deactivate_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.set_news_active(db, nid, False)
-        if ok:
-            await message.reply(f"# {nid} ⛔ deactivated")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("delete"))
-async def delete_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.delete_news(db, nid)
-        if ok:
-            await message.reply(f"# {nid} 🗑️ deleted")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("delete_all"))
-async def delete_all_handler(message: Message):
-    db = SessionLocal()
-    try:
-        crud.delete_all_news(db)
-        await message.reply("Barcha yangiliklar o'chirildi.")
-    finally:
-        db.close()

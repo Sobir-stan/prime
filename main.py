@@ -34,13 +34,6 @@ def main():
         sys.exit(subprocess.call([venv_python] + sys.argv))
 
     # Uvicorn serveri va Telegram botni birgalikda ishga tushirish
-    
-    # 1. Ngrok ni uvicorn dagi 8000 port bilan mutanosib tarzda boshlash
-    from ngrok_manager import start_ngrok
-    ngrok_proc, ngrok_url = start_ngrok(8000)
-    if ngrok_url:
-        os.environ["NGROK_URL"] = ngrok_url
-        
     print("Telegram bot orqa fonda ishga tushirilmoqda...")
     bot_process = subprocess.Popen([sys.executable, "-m", "bot.main"])
     
@@ -53,13 +46,9 @@ def main():
             reload=True,
         )
     finally:
-        print("Bot va qolgan xizmatlar to'xtatilmoqda...")
+        print("Bot to'xtatilmoqda...")
         bot_process.terminate()
         bot_process.wait()
-        
-        if ngrok_proc:
-            ngrok_proc.terminate()
-            ngrok_proc.wait()
 
 # Dastur to'g'ridan-to'g'ri chaqirilganda main() ni ishga tushirish
 if __name__ == "__main__":

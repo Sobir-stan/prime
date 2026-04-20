@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchRating();
 });
 
-// API orqali eng ko'p pechenye yig'gan TOP-10 lik o'yinchilarni olib keladi
 async function fetchRating() {
     const tbody = document.getElementById('rating-body');
     const loading = document.getElementById('loading');
