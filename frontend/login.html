@@ -240,6 +240,17 @@
 
     <script src="/static/scripts/scripts.js?v=2"></script>
 
+    <script>
+        // Telegram ID ni URL dan olish
+        const urlParams = new URLSearchParams(window.location.search);
+        const tgId = urlParams.get('tg_id');
+        if (tgId) {
+            localStorage.setItem('tg_id_temp', tgId);
+            // Login sahifasida qolish, registerga o'tkazmaslik
+            // window.location.href = `/register?tg_id=${tgId}`;
+        }
+    </script>
+
 </body>
 
 </html>

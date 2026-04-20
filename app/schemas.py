@@ -18,8 +18,7 @@ class Login_user(BaseModel):
 
 class SaveProgress(BaseModel):
     username: str
-    cookies: float
-    totalCookies: float
+    cookie_delta: float  # Client now sends the change in cookies, not the total
     cps: float
     cursor_count : int
     grandma_count : int

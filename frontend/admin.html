@@ -36,6 +36,26 @@
     <div id="promoList"></div>
 
     <script>
+        // Admin check
+        async function checkAdminAccess() {
+            try {
+                const response = await fetch('/check_admin');
+                if (!response.ok) {
+                    alert('Siz admin emassiz!');
+                    window.location.href = '/';
+                    return;
+                }
+                const data = await response.json();
+                if (!data.is_admin) {
+                    alert('Siz admin emassiz!');
+                    window.location.href = '/';
+                }
+            } catch (e) {
+                alert('Admin tekshirishda xatolik!');
+                window.location.href = '/';
+            }
+        }
+
         async function loadPromos() {
             const response = await fetch('/promo/list');
             const promos = await response.json();
@@ -92,6 +112,8 @@
             }
         }
 
+        // Page load qilganda admin check qil
+        checkAdminAccess();
         loadPromos();
     </script>
 </body>

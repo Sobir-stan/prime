@@ -1,4 +1,3 @@
-
 function showNotification(message, type = 'error') {
     const notifEl = document.getElementById('global-notification');
 
@@ -63,6 +62,29 @@ async function registerUser() {
             console.log(`[Register Success] Server responded:`, result);
             showNotification("Ro'yxatdan o'tish muvaffaqiyatli! (Registration successful)", 'success');
 
+            // Telegram ID bilan login qilish
+            const tgId = localStorage.getItem('tg_id_temp');
+            if (tgId) {
+                try {
+                    const tgResp = await fetch('/tg_login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ telegram_id: parseInt(tgId), username: username })
+                    });
+                    if (tgResp.ok) {
+                        const tgData = await tgResp.json();
+                        localStorage.setItem('primeUser', tgData.username);
+                        if (tgData.token) localStorage.setItem('primeToken', tgData.token);
+                        
+                        setTimeout(() => {
+                            window.location.href = '/clicker';
+                        }, 500);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Telegram login after register error:", e);
+                }
+            }
 
             setTimeout(() => {
                 window.location.href = '/';
@@ -118,6 +140,24 @@ async function loginUser() {
 
             localStorage.setItem('primeUser', username);
             if (result.token) localStorage.setItem('primeToken', result.token);
+
+            // Telegram ID bilan ulash
+            const tgId = localStorage.getItem('tg_id_temp');
+            if (tgId) {
+                try {
+                    const tgResp = await fetch('/tg_login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ telegram_id: parseInt(tgId), username: username })
+                    });
+                    if (tgResp.ok) {
+                        //localStorage.removeItem('tg_id_temp');
+                    }
+                } catch (e) {
+                    console.error("Telegram login error:", e);
+                }
+            }
+
             setTimeout(() => {
                 window.location.href = '/clicker';
             }, 500);

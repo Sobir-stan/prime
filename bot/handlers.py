@@ -1,33 +1,46 @@
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import Message, WebAppInfo
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.state import StatesGroup, State
 from app.db.database import SessionLocal
-from app.db.models import Progress, PromoCode, UsedPromo
+from app.db.models import Progress
 from app.db import crud
-from datetime import datetime
+import os
 
 # Ushbu fayl aiogram orqali Telegram botning xabarlarini qayta ishlashni (handler) taminlaydi.
 # Komandalar (/start), menyu tugmalari va WebApp havolasi shu faylda yaratiladi va sozlanadi.
 
 router = Router()
 
-# WebApp ga yo'naltiruvchi havola (Ngrok yoki sizning domeningiz)
-URL = "http://localhost:8000"
 
-# Promokod kiritsah uchun holat (State)
+# WebApp ga yo'naltiruvchi havola (Ngrok avtomatik tarzda sozlanadi)
+URL = os.getenv("NGROK_URL", "https://stan.uz")
+
+
 class PromoStates(StatesGroup):
     waiting_for_promo = State()
 
 
-# Asosiy klaviatura (menyular) ni yaratish
-def get_main_keyboard():
-    builder = ReplyKeyboardBuilder()
+def check_telegram_id(message: Message):
+    is_registered = False
+    with SessionLocal() as db:
+        user = crud.get_user_by_telegram_id(db, message.from_user.id)
+        is_registered = bool(user)
+    return is_registered
 
-    # WebApp tugmasini qo'shish
-    builder.button(text="🎮 Clicker O'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))
+def clicker_main_keyboard(message: Message):
+    builder = InlineKeyboardBuilder()
+
+    is_registered = check_telegram_id(message)
+    target_url = f"{URL}/?tg_id={message.from_user.id}" if not is_registered else f"{URL}/clicker?tg_id={message.from_user.id}"
+    builder.button(text="🎮 Clicker O'ynash", web_app=WebAppInfo(url=target_url))
+    return builder.as_markup(resize_keyboard=True)
+
+
+def get_main_keyboard(message: Message):
+    builder = ReplyKeyboardBuilder()
     builder.button(text="🏆 Reyting")
     builder.button(text="💼 Vazifalar")
     builder.button(text="🎁 PROMOKOD")
@@ -43,16 +56,19 @@ async def start_handler(message: Message, state: FSMContext):
     await message.answer(
         f"Salom, {message.from_user.first_name}! Clicker o'yiniga xush kelibsiz.\n\n"
         "Mini App'ni ishga tushirish uchun 'Clicker O'ynash' tugmasini bosing.",
-        reply_markup=get_main_keyboard()
+        reply_markup=get_main_keyboard(message)
+
     )
+    await message.answer("🎮 Clicker o'ynash uchun quyidagi tugmani bosing:",
+                         reply_markup=clicker_main_keyboard(message)
+                         )
 
 
 # "🏆 Reyting" tugmasi bosilganda ishlovchi handler
 @router.message(F.text == "🏆 Reyting")
 async def rating_handler(message: Message, state: FSMContext):
     await state.clear()
-    db = SessionLocal()
-    try:
+    with SessionLocal() as db:
         # Eng ko'p pechenye yig'gan Top-10 ni bazadan olish
         top = db.query(Progress).order_by(Progress.totalCookies.desc()).limit(10).all()
         # Agar reyting bo'sh bo'lsa
@@ -67,9 +83,6 @@ async def rating_handler(message: Message, state: FSMContext):
 
         # Markdown formatida xabarni yuborish
         await message.answer(response, parse_mode="Markdown")
-    finally:
-        # Bazani ulanishni majburiy yopish
-        db.close()
 
 
 # "💼 Vazifalar" tugmasi bosilganda ishlovchi handler
@@ -89,57 +102,30 @@ async def promo_code_button(message: Message, state: FSMContext):
 @router.message(PromoStates.waiting_for_promo)
 async def process_promo_code(message: Message, state: FSMContext):
     code = message.text.upper().strip()
-    username = message.from_user.username or f"user_{message.from_user.id}"
-    
-    db = SessionLocal()
+    print(f"Received promo code: {code} adding bonus...")
     try:
-        # Promokodni bazadan qidirish
-        promo = crud.get_promo_by_code(db, code)
-        
-        # Promokod mavjudligini tekshirish
-        if not promo:
-            await message.answer("❌ Bunday promokod mavjud emas!")
-            await state.clear()
-            return
-        
-        # Promokod faol ekanligini tekshirish
-        if not promo.active:
-            await message.answer("❌ Bu promokod faolsizlantirilgan!")
-            await state.clear()
-            return
-        
-        # Promokod muddati tugganligini tekshirish
-        if datetime.utcnow() > promo.expires_at:
-            await message.answer("❌ Promokod muddati tugagan!")
-            await state.clear()
-            return
-        
-        # Promokod ishlatish limitini tekshirish
-        used_count = crud.get_promo_usage_count(db, code)
-        if used_count >= promo.usage_limit:
-            await message.answer("❌ Bu promokod ishlatish limiti tugagan!")
-            await state.clear()
-            return
-        
-        # Foydalanuvchi bu promokodni allaqachon ishlatganligini tekshirish
-        if crud.is_promo_used_by_user(db, code, username):
-            await message.answer("❌ Siz bu promokodni allaqachon ishlatgansiz!")
-            await state.clear()
-            return
-        
-        # Promokod bajarilishi: bonus pechenye qo'shish
-        crud.add_bonus_cookies(db, username, promo.cookies)
-        crud.use_promo(db, code, username)
-        
-        await message.answer(
-            f"✅ Tabriklaymiz! 🍪 {int(promo.cookies)} ta pechenye bonus sifatida qo'shildi!\n\n"
-            f"Promokod: {promo.code}",
-            reply_markup=get_main_keyboard()
-        )
-        await state.clear()
-        
+        with SessionLocal() as db:
+            with db.begin(): # Modern transaction management
+                user = crud.get_user_by_telegram_id(db, message.from_user.id)
+                if not user:
+                    await message.answer("❌ Avval '🎮 Clicker O'ynash' tugmasini bosing va akkauntingizni ulang!")
+                    await state.clear()
+                    return
+
+                username = user.username
+                
+                promo = crud.apply_promo_code_to_user(db, code, username)
+
+                await message.answer(
+                    f"✅ Tabriklaymiz! 🍪 {int(promo.cookies)} ta pechenye bonus sifatida {username} akkauntiga qo'shildi!\n\n"
+                    f"Promokod: {promo.code}\n\n"
+                    f"📱 O'yin sahifasini yangilang (refresh) pecheniyelarni ko'rish uchun.",
+                    reply_markup=get_main_keyboard(message)
+                )
+
+    except ValueError as e:
+        await message.answer(f"❌ {str(e)}")
     except Exception as e:
         await message.answer(f"❌ Xatolik yuz berdi: {str(e)}")
-        await state.clear()
     finally:
-        db.close()
+        await state.clear()

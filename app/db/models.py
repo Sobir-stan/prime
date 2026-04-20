@@ -32,6 +32,7 @@ class PromoCode(Base):
     cookies = Column(Float, nullable=False)
     usage_limit = Column(Integer, nullable=False)
     active = Column(Boolean, default=True)
+    created_by_username = Column(String, nullable=True)  # Promokod yaratgan admin nomi
 
 class UsedPromo(Base):
     __tablename__ = "used_promos"
