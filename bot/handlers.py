@@ -16,7 +16,7 @@ router = Router()
 
 
 # WebApp ga yo'naltiruvchi havola (Ngrok avtomatik tarzda sozlanadi)
-URL = os.getenv("NGROK_URL", "https://stan.uz")
+URL = os.getenv("NGROK_URL", "http://localhost:8000")
 
 
 class PromoStates(StatesGroup):

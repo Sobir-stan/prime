@@ -82,12 +82,14 @@ async function loadProgress(username) {
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
     if (!user) {
+        console.log("Save aborted: No user.");
         return;
     }
 
     const cookie_delta = cookies - cookiesAtLastSave;
 
-    // The faulty conditional is REMOVED. The save will now always be attempted.
+    // This is the crucial change: we save even if the delta is zero or negative,
+    // to ensure upgrade purchases are synced.
     
     const saveData = {
         username: user,
@@ -100,7 +102,7 @@ async function saveProgress() {
 
     try {
         const token = localStorage.getItem('primeToken') || '';
-        console.log("Attempting to save progress with delta:", cookie_delta); // This will now fire every 10s
+        console.log("Attempting to save progress with delta:", cookie_delta);
         const response = await fetch('/save_progress', {
             method: 'POST',
             headers: {
@@ -115,7 +117,6 @@ async function saveProgress() {
             cookiesAtLastSave = cookies;
         } else {
             console.error("Save failed with status:", response.status, await response.text());
-            // location.reload(); // Optional: uncomment to force a resync on failure
         }
     } catch (e) {
         console.error("Connection error saving progress:", e);

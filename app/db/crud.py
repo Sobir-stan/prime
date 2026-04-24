@@ -45,7 +45,6 @@ def get_progress_by_username(db: Session, username: str):
     return db.query(Progress).filter(Progress.username == username).first()
 
 def update_or_create_progress(db: Session, progress_data: SaveProgress):
-    print("Crud update_or_progres ishga tushdi")
     db_progress = get_progress_by_username(db, progress_data.username)
     
     if not db_progress:

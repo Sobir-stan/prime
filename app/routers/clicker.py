@@ -24,7 +24,6 @@ def save_progress(progress: SaveProgress, db: Session = Depends(get_db), current
     if current_user != progress.username:
         raise HTTPException(status_code=403, detail="Ruxsat etilmagan")
 
-    print(f"Saving progress for user={progress.username}, cookie_delta={progress.cookie_delta}")
     crud.update_or_create_progress(db, progress)
 
     return {"msg": "progress saqlandi"}
