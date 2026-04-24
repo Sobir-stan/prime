@@ -29,8 +29,11 @@ async function initUser() {
     const activeUser = localStorage.getItem('primeUser');
     const activeToken = localStorage.getItem('primeToken');
 
+    console.log('[initUser] TG ID:', tgId, 'Active User:', activeUser, 'Has Token:', !!activeToken);
+
     if (tgId && activeUser && activeToken) {
         // Silently bind the Telegram ID to the existing session
+        console.log('[Link Telegram] Attempting to link telegram_id:', tgId);
         fetch('/link_telegram', {
             method: 'POST',
             headers: {
@@ -47,6 +50,7 @@ async function initUser() {
             console.error("[Link Telegram] Error:", e);
         });
     } else if (tgId) {
+        console.log('[initUser] TG ID detected but no active web session. Attempting auto-login via /tg_login');
         try {
             window.Telegram.WebApp.expand();
             const resp = await fetch('/tg_login', {
@@ -56,11 +60,23 @@ async function initUser() {
             });
             if (resp.ok) {
                 const data = await resp.json();
+                console.log('[TG Auto-Login] Success:', data);
                 localStorage.setItem('primeUser', data.username);
                 if (data.token) localStorage.setItem('primeToken', data.token);
+                // Now that we're logged in, try to link the telegram_id
+                await fetch('/link_telegram', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${data.token}`
+                    },
+                    body: JSON.stringify({ telegram_id: tgId })
+                }).then(r => console.log('[Link Telegram after auto-login] Status:', r.status));
+            } else {
+                console.warn('[TG Auto-Login] Failed with status', resp.status);
             }
         } catch (e) {
-            console.error("TG Auth error", e);
+            console.error("[TG Auto-Login] Error:", e);
         }
     }
 
