@@ -38,7 +38,14 @@ async function initUser() {
                 'Authorization': `Bearer ${activeToken}`
             },
             body: JSON.stringify({ telegram_id: tgId })
-        }).catch(e => console.error("Link error", e));
+        }).then(r => {
+            console.log('[Link Telegram] Response status:', r.status);
+            return r.json().then(j => ({status: r.status, data: j}));
+        }).then(result => {
+            console.log('[Link Telegram] Success:', result);
+        }).catch(e => {
+            console.error("[Link Telegram] Error:", e);
+        });
     } else if (tgId) {
         try {
             window.Telegram.WebApp.expand();

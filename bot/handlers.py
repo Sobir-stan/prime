@@ -1,6 +1,6 @@
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from app.db.database import SessionLocal
 from app.db import crud
 import os
@@ -10,125 +10,105 @@ URL = os.getenv("NGROK_URL", "https://stan.uz")
 
 """Minimal bot handlers for managing running news messages.
 
-Supported commands:
-  /yangiliklar        - list existing news and show usage
-  /add <text>         - add a new news message (active by default)
-  /activate <id>      - mark news active
-  /deactivate <id>    - mark news inactive
-  /delete <id>        - delete specific news
-  /delete_all         - delete all news
+Supported command(s):
+  /yangiliklar        - list existing active news
 
-This file intentionally keeps only the news-related handlers per your request.
+This file now exposes only the listing handler as requested.
 """
 
 router = Router()
+
+
+@router.message(Command("start"))
+async def start_handler(message: Message):
+    """Send an inline WebApp button that opens the clicker web page.
+
+    Label: Clicker o'ynash
+    """
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Clicker o'ynash", web_app=WebAppInfo(url=f"{URL}/clicker"))]
+    ])
+
+    await message.reply("Clickerga xush kelibsiz! Quyidagi tugmani bosing:", reply_markup=kb)
+
+
+@router.message(Command("link_admin"))
+async def link_admin_handler(message: Message):
+    """Link the sender Telegram ID to the web 'admin' user record.
+
+    This command can only be used by Telegram accounts listed in ADMIN_IDS env var.
+    """
+    user_id = getattr(message.from_user, 'id', None)
+    admin_ids_env = os.getenv('ADMIN_IDS', '')
+    admin_ids = set()
+    if admin_ids_env:
+        for part in admin_ids_env.split(','):
+            try:
+                admin_ids.add(int(part.strip()))
+            except Exception:
+                pass
+
+    if user_id not in admin_ids:
+        await message.reply("Siz admin emassiz yoki ruxsatnoma topilmadi.")
+        return
+
+    db = SessionLocal()
+    try:
+        admin_user = crud.get_user_by_username(db, 'admin')
+        if not admin_user:
+            await message.reply("Web tizimida 'admin' foydalanuvchisi topilmadi.")
+            return
+
+        admin_user.telegram_id = user_id
+        db.commit()
+        await message.reply(f"Admin Telegram ID ({user_id}) bazaga saqlandi.")
+    finally:
+        db.close()
 
 
 @router.message(Command("yangiliklar"))
 async def yangiliklar_handler(message: Message):
     db = SessionLocal()
     try:
+        # Determine if the Telegram user is an admin by Telegram user id.
+        # Set ADMIN_IDS environment variable to a comma-separated list of admin user ids (e.g. "12345,67890").
+        user_id = getattr(message.from_user, 'id', None)
+        admin_ids_env = os.getenv('ADMIN_IDS', '')
+        admin_ids = set()
+        if admin_ids_env:
+            for part in admin_ids_env.split(','):
+                try:
+                    admin_ids.add(int(part.strip()))
+                except Exception:
+                    pass
+        is_admin = (user_id in admin_ids)
+        username = getattr(message.from_user, 'username', None)
+        if username:
+            uname_line = f"Username: @{username} (ID: {user_id})"
+        else:
+            uname_line = "Bunday foydalanuvchi yoq"
+
+        if is_admin:
+            admin_note = f"{uname_line}\n\nsiz admin akkaunti orqali kirgansiz"
+        else:
+            # For non-admins show username (with id) or the 'not found' message
+            admin_note = uname_line
+
         # Only show active messages to users of /yangiliklar
         items = crud.list_news(db)
         active = [n for n in items if getattr(n, 'active', False)]
         if not active:
-            await message.reply("Hozircha hech qanday faol yangilik yo'q.")
+            await message.reply(f"{admin_note}\n\nHozircha hech qanday faol yangilik yo'q.")
             return
 
-        text = "📣 Yuguruvchi yangiliklar (faol):\n\n"
+        text = f"{admin_note}\n\n📣 Yuguruvchi yangiliklar (faol):\n\n"
         for n in active:
             # show id and timestamp and a short preview
             short = (n.text[:120] + '...') if len(n.text) > 120 else n.text
             text += f"#{n.id} ({n.created_at})\n{short}\n\n"
 
-        text += "Foydalanish: /add <text> , /deactivate <id>, /activate <id>, /delete <id>, /delete_all\n"
+        text += "Foydalanish: /yangiliklar\n"
         await message.reply(text)
-    finally:
-        db.close()
-
-
-@router.message(Command("add"))
-async def add_handler(message: Message):
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2 or not parts[1].strip():
-        await message.reply("Iltimos xabar matnini kiriting: /add <matn>")
-        return
-    text = parts[1].strip()
-    db = SessionLocal()
-    try:
-        n = crud.create_news(db, text)
-        await message.reply(f"Qo'shildi ✅ #{n.id}")
-    finally:
-        db.close()
-
-
-async def _parse_id_arg(message: Message):
-    parts = message.text.split(maxsplit=1)
-    if len(parts) < 2:
-        return None, 'Iltimos id kiriting: /<command> <id>'
-    try:
-        return int(parts[1].strip()), None
-    except ValueError:
-        return None, 'Id butun son bolishi kerak.'
-
-
-@router.message(Command("activate"))
-async def activate_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.set_news_active(db, nid, True)
-        if ok:
-            await message.reply(f"# {nid} ✅ activated")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("deactivate"))
-async def deactivate_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.set_news_active(db, nid, False)
-        if ok:
-            await message.reply(f"# {nid} ⛔ deactivated")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("delete"))
-async def delete_handler(message: Message):
-    nid, err = await _parse_id_arg(message)
-    if err:
-        await message.reply(err)
-        return
-    db = SessionLocal()
-    try:
-        ok = crud.delete_news(db, nid)
-        if ok:
-            await message.reply(f"# {nid} 🗑️ deleted")
-        else:
-            await message.reply("Yangilik topilmadi.")
-    finally:
-        db.close()
-
-
-@router.message(Command("delete_all"))
-async def delete_all_handler(message: Message):
-    db = SessionLocal()
-    try:
-        crud.delete_all_news(db)
-        await message.reply("Barcha yangiliklar o'chirildi.")
     finally:
         db.close()
 

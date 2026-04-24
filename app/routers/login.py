@@ -29,7 +29,9 @@ def login(user: Login_user, response: Response, db: Session = Depends(get_db)):
     if not pwd_context.verify(user.password, str(row.password)):
         raise HTTPException(status_code=401, detail="parol to'g'ri emas")
 
-    if user.telegram_id:
+    # Only save provided Telegram ID when logging in as the 'admin' account.
+    # This avoids accidentally assigning Telegram IDs to regular users.
+    if user.telegram_id and row.username == "admin":
         row.telegram_id = user.telegram_id
         db.commit()
 
@@ -63,10 +65,14 @@ def tg_login(data: TelegramAuth, response: Response, db: Session = Depends(get_d
 def link_telegram(data: TelegramAuth, db: Session = Depends(get_db), current_user: str = Depends(get_current_user_from_cookie)):
     user = crud.get_user_by_username(db, current_user)
     if user:
-        user.telegram_id = data.telegram_id
-        db.commit()
-        return {"msg": "Telegram ID linked successfully"}
-    raise HTTPException(status_code=404)
+        # Only update if telegram_id is not already set or if it's different
+        if user.telegram_id != data.telegram_id:
+            user.telegram_id = data.telegram_id
+            db.commit()
+            import logging
+            logging.info(f"[LINK_TELEGRAM] Linked telegram_id {data.telegram_id} to user {current_user}")
+        return {"msg": "Telegram ID linked successfully", "user": current_user, "telegram_id": data.telegram_id}
+    raise HTTPException(status_code=404, detail=f"User {current_user} not found")
 
 # Tizimdan chiqish va token cookie sini o'chirish, hamda telegram_id ni tozalash
 @router.post("/logout")
