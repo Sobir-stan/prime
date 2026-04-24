@@ -48,7 +48,6 @@ def update_or_create_progress(db: Session, progress_data: SaveProgress):
     db_progress = get_progress_by_username(db, progress_data.username)
     
     if not db_progress:
-        # This case is for the very first save.
         new_progress = Progress(
             username=progress_data.username,
             cookies=progress_data.cookie_delta,
@@ -63,14 +62,12 @@ def update_or_create_progress(db: Session, progress_data: SaveProgress):
         db.refresh(new_progress)
         return new_progress
     else:
-        # Add the delta from the client to the authoritative server state
         db_progress.cookies += progress_data.cookie_delta
         
-        # Only add positive changes to totalCookies to prevent exploits
+        # Defensive check: totalCookies should only ever increase from client-side activity
         if progress_data.cookie_delta > 0:
             db_progress.totalCookies += progress_data.cookie_delta
         
-        # Update other stats from the client
         db_progress.cps = progress_data.cps
         db_progress.cursor_count = progress_data.cursor_count
         db_progress.grandma_count = progress_data.grandma_count
@@ -101,14 +98,12 @@ def use_promo(db: Session, code: str, username: str):
 
 def add_bonus_cookies(db: Session, username: str, bonus: float):
     progress = get_progress_by_username(db, username)
-
     if not progress:
         progress = Progress(username=username, cookies=bonus, totalCookies=bonus, cps=0.0, cursor_count=0, grandma_count=0, factory_count=0)
         db.add(progress)
     else:
         progress.cookies += bonus
         progress.totalCookies += bonus
-
     db.flush()
     db.refresh(progress)
     return progress

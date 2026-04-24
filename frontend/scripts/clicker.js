@@ -1,7 +1,7 @@
 let cookies = 0;
 let totalCookies = 0;
 let cps = 0;
-let cookiesAtLastSave = 0; // Authoritative cookie count from the last successful save
+let cookiesAtLastSave = 0; // Authoritative cookie count from the last successful save/load
 
 const upgrades = {
     cursor: { baseCost: 15, cost: 15, count: 0, cpsAdd: 0.1 },
@@ -14,6 +14,43 @@ const cpsEl = document.getElementById('cps');
 const bigCookie = document.getElementById('bigCookie');
 const usernameDisplay = document.getElementById('usernameDisplay');
 const avatarInitial = document.getElementById('avatarInitial');
+
+// This is the new, robust, non-destructive state-merging logic
+window.addEventListener('focus', async () => {
+    const user = localStorage.getItem('primeUser');
+    if (!user) return;
+
+    console.log("Window focused. Syncing state with server...");
+    try {
+        const token = localStorage.getItem('primeToken') || '';
+        const response = await fetch(`/load_progress/${user}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        
+        if (response.ok) {
+            const serverProgress = await response.json();
+            
+            // Calculate the cookies earned locally since the last time we synced with the server
+            const unsavedDelta = cookies - cookiesAtLastSave;
+            
+            // The new authoritative state is the server's state plus our unsaved local progress
+            const newAuthoritativeCookies = serverProgress.cookies + unsavedDelta;
+
+            if (Math.floor(cookies) !== Math.floor(newAuthoritativeCookies)) {
+                console.log("Server state has changed. Merging states.");
+                cookies = newAuthoritativeCookies;
+                totalCookies = serverProgress.totalCookies + (unsavedDelta > 0 ? unsavedDelta : 0);
+                
+                // Update the baseline for the next save/sync to the new merged state
+                cookiesAtLastSave = newAuthoritativeCookies;
+                
+                updateUI();
+            } else {
+                console.log("States are in sync.");
+            }
+        }
+    } catch (e) {
+        console.error("Error syncing progress on focus:", e);
+    }
+});
 
 async function initUser() {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -81,15 +118,9 @@ async function loadProgress(username) {
 
 async function saveProgress() {
     const user = localStorage.getItem('primeUser');
-    if (!user) {
-        console.log("Save aborted: No user.");
-        return;
-    }
+    if (!user) return;
 
     const cookie_delta = cookies - cookiesAtLastSave;
-
-    // This is the crucial change: we save even if the delta is zero or negative,
-    // to ensure upgrade purchases are synced.
     
     const saveData = {
         username: user,
@@ -102,18 +133,13 @@ async function saveProgress() {
 
     try {
         const token = localStorage.getItem('primeToken') || '';
-        console.log("Attempting to save progress with delta:", cookie_delta);
         const response = await fetch('/save_progress', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(saveData)
         });
 
         if (response.ok) {
-            console.log("Save successful.");
             cookiesAtLastSave = cookies;
         } else {
             console.error("Save failed with status:", response.status, await response.text());
